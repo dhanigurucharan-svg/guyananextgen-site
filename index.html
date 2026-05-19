@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guyana Next Gen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-deep: #0b2e1f;
+      --green-mid: #174d34;
+      --green-bright: #2a7a50;
+      --gold: #c9a84c;
+      --gold-light: #e8c876;
+      --cream: #f5f0e8;
+      --cream-dark: #ede5d4;
+      --white: #ffffff;
+      --text-dark: #0b1f14;
+      --font-display: 'Cormorant Garamond', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--cream);
+      color: var(--text-dark);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 72px;
+      background: rgba(11,30,20,0.93);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(201,168,76,0.2);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .nav-logo-mark {
+      width: 38px;
+      height: 38px;
+      background: var(--gold);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--green-deep);
+      flex-shrink: 0;
+    }
+
+    .nav-logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .nav-logo-main {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.02em;
+    }
+
+    .nav-logo-sub {
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--gold); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-login {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+      background: none;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 9px 22px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-login:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .btn-signup {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--green-deep);
+      background: var(--gold);
+      border: none;
+      padding: 10px 24px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-signup:hover { background: var(--gold-light); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding-top: 72px;
+      background: var(--green-deep);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 60% 80% at 70% 50%, rgba(42,122,80,0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 20% 80%, rgba(201,168,76,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Geometric pattern */
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -100px;
+      top: -100px;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      border: 1px solid rgba(201,168,76,0.12);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 64px 80px 72px;
+      position: relative;
+      z-index: 2;
+      color: #ffffff;
+    }
+
+    .hero-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .hero-eyebrow-line {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+    }
+
+    .hero-eyebrow-text {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(52px, 5.5vw, 82px);
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 24px;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.65);
+      max-width: 440px;
+      margin-bottom: 44px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--green-deep);
+      background: var(--gold);
+      border: none;
+      padding: 16px 36px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary:hover { background: var(--gold-light); }
+
+    .btn-outline {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--white);
+      background: none;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 16px 36px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      margin-top: 56px;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .hero-stat-num {
+      font-family: var(--font-display);
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .hero-stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-top: 6px;
+    }
+
+    /* Hero visual panel */
+    .hero-visual {
+      position: relative;
+      overflow: hidden;
+      background: var(--green-mid);
+    }
+
+    .hero-visual-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, var(--green-mid) 0%, #0f3d25 50%, var(--green-deep) 100%);
+    }
+
+    .hero-visual-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.06;
+      background-image: 
+        repeating-linear-gradient(
+          45deg,
+          var(--gold) 0px, var(--gold) 1px,
+          transparent 1px, transparent 40px
+        );
+    }
+
+    .hero-visual-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 60px;
+      z-index: 2;
+    }
+
+    .hero-badge {
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.4);
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .forum-preview-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 20px 24px;
+      width: 100%;
+      max-width: 380px;
+      transition: background 0.2s;
+    }
+
+    .forum-preview-card:hover {
+      background: rgba(255,255,255,0.09);
+    }
+
+    .fpc-tag {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .fpc-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--white);
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+
+    .fpc-meta {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .fpc-replies {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .fpc-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green-bright);
+    }
+
+    /* ── SECTIONS SHARED ── */
+    section { position: relative; }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-label span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0,0,0,0.1);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 2.5vw, 38px);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--green-deep);
+    }
+
+    /* ── FORUM ── */
+    .forum {
+      padding: 56px 72px;
+      background: var(--cream);
+    }
+
+    .forum-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 24px;
+    }
+
+    .forum-header-left { max-width: 520px; }
+
+    .forum-desc {
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.6;
+      color: rgba(11,30,20,0.6);
+      margin-top: 8px;
+    }
+
+    .forum-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 28px;
+    }
+
+    .forum-categories {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .forum-cat-card {
+      background: var(--white);
+      border: 1px solid rgba(11,30,20,0.08);
+      border-radius: 6px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .forum-cat-card:hover {
+      border-color: var(--gold);
+      box-shadow: 0 4px 24px rgba(201,168,76,0.12);
+      transform: translateX(4px);
+    }
+
+    .fcc-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 4px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .fcc-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .fcc-body { flex: 1; }
+
+    .fcc-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 4px;
+    }
+
+    .fcc-desc {
+      font-size: 13px;
+      color: rgba(11,30,20,0.55);
+      line-height: 1.5;
+    }
+
+    .fcc-count {
+      text-align: right;
+    }
+
+    .fcc-count-num {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--green-deep);
+      line-height: 1;
+    }
+
+    .fcc-count-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(11,30,20,0.4);
+    }
+
+    .forum-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .forum-side-card {
+      background: var(--green-deep);
+      border-radius: 6px;
+      padding: 20px 24px;
+      color: var(--white);
+    }
+
+    .fsc-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .trending-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .trending-item:last-child { border-bottom: none; }
+
+    .ti-num {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: rgba(201,168,76,0.3);
+      line-height: 1;
+      width: 24px;
+      flex-shrink: 0;
+    }
+
+    .ti-title {
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.45;
+    }
+
+    .ti-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 3px;
+    }
+
+    .join-card {
+      background: linear-gradient(135deg, var(--gold) 0%, #a07820 100%);
+      border-radius: 6px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .join-card h3 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 8px;
+    }
+
+    .join-card p {
+      font-size: 13px;
+      color: rgba(11,30,20,0.7);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .btn-dark {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--white);
+      background: var(--green-deep);
+      border: none;
+      padding: 12px 28px;
+      border-radius: 2px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    /* ── EVENTS ── */
+    .events {
+      padding: 100px 72px;
+      background: var(--green-deep);
+    }
+
+    .events .section-title { color: var(--white); }
+    .events .section-label::after { background: rgba(255,255,255,0.1); }
+
+    .events-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 56px;
+    }
+
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .event-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: transform 0.25s;
+    }
+
+    .event-card:hover { transform: translateY(-4px); }
+
+    .event-card-top {
+      height: 8px;
+      background: var(--gold);
+    }
+
+    .event-card-top.green { background: var(--green-bright); }
+    .event-card-top.light { background: rgba(201,168,76,0.5); }
+
+    .event-card-body { padding: 28px; }
+
+    .event-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+    }
+
+    .event-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .event-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.65;
+      margin-bottom: 20px;
+    }
+
+    .event-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .event-location {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .event-register {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(201,168,76,0.4);
+      padding-bottom: 1px;
+      transition: color 0.2s;
+    }
+
+    .event-register:hover { color: var(--gold-light); }
+
+    /* ── NEWSLETTER ── */
+    .newsletter {
+      padding: 100px 72px;
+      background: var(--cream-dark);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .newsletter-left .section-title {
+      margin-top: 12px;
+      margin-bottom: 20px;
+    }
+
+    .newsletter-desc {
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.75;
+      color: rgba(11,30,20,0.6);
+    }
+
+    .newsletter-form {
+      background: var(--white);
+      border-radius: 6px;
+      padding: 28px 32px;
+      box-shadow: 0 4px 20px rgba(11,30,20,0.06);
+    }
+
+    .nf-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--green-deep);
+      margin-bottom: 2px;
+    }
+
+    .nf-sub {
+      font-size: 12px;
+      color: rgba(11,30,20,0.5);
+      margin-bottom: 18px;
+    }
+
+    .nf-field {
+      margin-bottom: 10px;
+    }
+
+    .nf-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(11,30,20,0.5);
+      margin-bottom: 6px;
+    }
+
+    .nf-field input {
+      width: 100%;
+      padding: 12px 16px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-dark);
+      background: var(--cream);
+      border: 1px solid rgba(11,30,20,0.12);
+      border-radius: 3px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .nf-field input::placeholder { color: rgba(11,30,20,0.35); }
+
+    .nf-field input:focus {
+      border-color: var(--green-bright);
+    }
+
+    .nf-interests {
+      margin-bottom: 16px;
+    }
+
+    .nf-interests label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(11,30,20,0.5);
+      margin-bottom: 10px;
+    }
+
+    .nf-interest-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .nf-tag {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border: 1px solid rgba(11,30,20,0.15);
+      border-radius: 40px;
+      background: none;
+      color: rgba(11,30,20,0.6);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .nf-tag.active, .nf-tag:hover {
+      background: var(--green-deep);
+      color: var(--gold);
+      border-color: var(--green-deep);
+    }
+
+    .btn-subscribe {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--white);
+      background: var(--green-deep);
+      border: none;
+      padding: 14px;
+      border-radius: 3px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .btn-subscribe:hover { background: var(--green-mid); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #060f0a;
+      padding: 60px 72px 40px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 32px;
+    }
+
+    .footer-brand p {
+      font-size: 13px;
+      line-height: 1.7;
+      margin-top: 16px;
+      max-width: 280px;
+    }
+
+    .footer-col h4 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 16px;
+    }
+
+    .footer-col a {
+      display: block;
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      text-decoration: none;
+      margin-bottom: 10px;
+      transition: color 0.15s;
+    }
+
+    .footer-col a:hover { color: var(--gold); }
+
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    /* ── YOUTUBE EMBED ── */
+    .yt-player-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 16/9;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      background: #000;
+    }
+
+    .yt-player-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .yt-placeholder {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 24px;
+    }
+
+    .yt-logo { width: 72px; height: auto; }
+
+    .yt-placeholder-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .yt-placeholder-sub {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+
+    .yt-cta {
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--white);
+      background: var(--green-bright);
+      padding: 9px 22px;
+      border-radius: 40px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .yt-cta:hover { background: var(--green-mid); }
+
+    .yt-placeholder-hint {
+      font-size: 10px;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.08em;
+    }
+
+    .yt-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .yt-meta-item {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .yt-meta-dot {
+      color: rgba(255,255,255,0.2);
+      font-size: 12px;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up { opacity: 0; }
+    .fade-up.animated { animation: fadeUp 0.7s ease forwards; }
+    .fade-up-1 { animation-delay: 0.1s; }
+    .fade-up-2 { animation-delay: 0.25s; }
+    .fade-up-3 { animation-delay: 0.4s; }
+    .fade-up-4 { animation-delay: 0.55s; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-visual { min-height: 280px; }
+      .hero-content { padding: 60px 24px; }
+      .forum, .events, .newsletter { padding: 60px 24px; }
+      .forum-grid { grid-template-columns: 1fr; }
+      .events-grid { grid-template-columns: 1fr; }
+      .newsletter { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr 1fr; }
+      footer { padding: 60px 24px 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">G</div>
+      <div class="nav-logo-text">
+        <span class="nav-logo-main">Guyana Next Gen</span>
+        <span class="nav-logo-sub">Business Exchange Forum</span>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="newsletter.html">Newsletter</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="btn-login" id="btn-open-login">Log In</button>
+      <button class="btn-signup" id="btn-open-signup">Sign Up</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow fade-up fade-up-1">
+        <div class="hero-eyebrow-line"></div>
+        <span class="hero-eyebrow-text">Guyana's Premier Business Network</span>
+      </div>
+      <h1 class="hero-title fade-up fade-up-2">
+        Connect, <em>Trade</em><br>& Build the<br>Next Generation
+      </h1>
+      <p class="hero-desc fade-up fade-up-3">
+        The hub for Guyanese entrepreneurs, investors, and business leaders to share ideas, forge partnerships, and drive economic growth.
+      </p>
+      <div class="hero-ctas fade-up fade-up-4">
+        <a href="#newsletter" class="btn-primary">Subscribe to Newsletter</a>
+      </div>
+
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-visual-bg"></div>
+      <div class="hero-visual-pattern"></div>
+      <div class="hero-visual-content">
+        <div class="hero-badge">Watch on YouTube</div>
+        <div class="yt-player-wrap">
+          <!-- Replace the src with your real YouTube embed URL -->
+          <iframe
+            id="yt-embed"
+            src="https://www.youtube.com/embed?listType=user_uploads&list=GuyanaNextGen"
+            title="Guyana Next Gen YouTube Channel"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+          <div class="yt-placeholder" id="yt-placeholder">
+            <svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg" class="yt-logo">
+              <rect width="80" height="56" rx="6" fill="#90c94a" stroke="#174d34" stroke-width="3"/>
+              <path d="M32 18L54 28L32 38V18Z" fill="#174d34"/>
+            </svg>
+            <div class="yt-placeholder-title">Guyana Next Gen</div>
+            <div class="yt-placeholder-sub">YouTube Channel</div>
+            <a href="https://www.youtube.com/@GuyanaNextGen" target="_blank" class="yt-cta">Visit Channel →</a>
+            <div class="yt-placeholder-hint">Replace with your channel URL</div>
+          </div>
+        </div>
+        <div class="yt-meta">
+          <span class="yt-meta-item">Latest Videos</span>
+          <span class="yt-meta-dot">·</span>
+          <span class="yt-meta-item">Business Insights</span>
+          <span class="yt-meta-dot">·</span>
+          <span class="yt-meta-item">Event Recaps</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OIL CHART + NEWSLETTER -->
+  <section class="forum" id="newsletter-section">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:stretch">
+      <!-- WTI Crude Oil Chart -->
+      <div style="background:var(--white);border:1px solid rgba(11,30,20,0.08);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;">
+        <div style="padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(11,30,20,0.06);">
+          <span style="font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:rgba(11,30,20,0.45);">WTI Crude Oil — Live Price</span>
+          <span style="font-size:10px;color:rgba(11,30,20,0.3);">TVC:USOIL</span>
+        </div>
+        <div class="tradingview-widget-container" style="flex:1;min-height:380px;">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {
+            "symbol": "TVC:USOIL",
+            "width": "100%",
+            "height": 380,
+            "locale": "en",
+            "dateRange": "3M",
+            "colorTheme": "light",
+            "trendLineColor": "rgba(42, 122, 80, 1)",
+            "underLineColor": "rgba(42, 122, 80, 0.08)",
+            "isTransparent": false,
+            "autosize": true,
+            "largeChartUrl": ""
+          }
+          </script>
+        </div>
+      </div>
+
+      <div class="newsletter-form" id="newsletter" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="nf-title">Subscribe to Newsletter</div>
+        <div class="nf-sub">Stay informed every week</div>
+        <div class="nf-field">
+          <label>Full Name</label>
+          <input type="text" placeholder="e.g. Marcus James" />
+        </div>
+        <div class="nf-field">
+          <label>Email Address</label>
+          <input type="email" placeholder="you@example.com" />
+        </div>
+        <div class="nf-interests">
+          <label>I'm interested in</label>
+          <div class="nf-interest-tags">
+            <button class="nf-tag active" onclick="this.classList.toggle('active')">Investment</button>
+            <button class="nf-tag" onclick="this.classList.toggle('active')">Agriculture</button>
+            <button class="nf-tag" onclick="this.classList.toggle('active')">Tech</button>
+            <button class="nf-tag" onclick="this.classList.toggle('active')">Trade</button>
+            <button class="nf-tag" onclick="this.classList.toggle('active')">Events</button>
+            <button class="nf-tag" onclick="this.classList.toggle('active')">Policy</button>
+          </div>
+        </div>
+        <button class="btn-subscribe" style="margin-top:auto">Subscribe to Newsletter</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo" style="filter: brightness(0.8);">
+          <div class="nav-logo-mark" style="width:32px;height:32px;font-size:14px;">G</div>
+          <div class="nav-logo-text">
+            <span class="nav-logo-main" style="font-size:15px;">Guyana Next Gen</span>
+            <span class="nav-logo-sub">Business Exchange Forum</span>
+          </div>
+        </a>
+        <p>The premier platform connecting Guyana's business community — from Georgetown to the diaspora worldwide.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <a href="events.html">Events</a>
+        <a href="newsletter.html">Newsletter</a>
+        <a href="about.html">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <a href="#" onclick="GNG.openModal('login');return false">Log In</a>
+        <a href="#" onclick="GNG.openModal('signup');return false">Sign Up</a>
+        <a href="#" onclick="GNG.openModal('contact');return false">Contact Us</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Guyana Next Gen. All rights reserved.</span>
+      <span>Privacy Policy · Terms of Use</span>
+    </div>
+  </footer>
+
+  <script>
+    // Tweaks system
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accentColor": "#90c94a",
+      "heroTagline": "Guyana's Premier Business Network",
+      "showStats": true
+    }/*EDITMODE-END*/;
+
+    let tweaks = { ...TWEAK_DEFAULTS };
+
+    function applyTweaks() {
+      document.documentElement.style.setProperty('--gold', tweaks.accentColor);
+      document.documentElement.style.setProperty('--gold-light', tweaks.accentColor + 'cc');
+      document.querySelector('.hero-eyebrow-text').textContent = tweaks.heroTagline;
+      const statsEl = document.querySelector('.hero-stats');
+      if (statsEl) statsEl.style.display = tweaks.showStats ? 'flex' : 'none';
+    }
+
+    applyTweaks();
+
+    // Trigger fade-up animations after load
+    window.addEventListener('load', () => {
+      document.querySelectorAll('.fade-up').forEach(el => el.classList.add('animated'));
+    });
+
+    // Tweaks panel
+    const tweaksPanel = document.createElement('div');
+    tweaksPanel.id = 'tweaks-panel';
+    tweaksPanel.style.cssText = `
+      display:none; position:fixed; bottom:24px; right:24px; z-index:9999;
+      background:white; border:1px solid #ddd; border-radius:8px;
+      padding:20px 24px; width:280px; box-shadow:0 8px 32px rgba(0,0,0,0.15);
+      font-family:'DM Sans',sans-serif;
+    `;
+    tweaksPanel.innerHTML = `
+      <div style="font-weight:700;font-size:14px;margin-bottom:16px;color:#0b2e1f;">Tweaks</div>
+      <label style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;display:block;margin-bottom:6px;">Accent Color</label>
+      <input type="color" id="tw-color" value="${tweaks.accentColor}" style="width:100%;height:36px;border:1px solid #eee;border-radius:4px;margin-bottom:14px;cursor:pointer;" />
+      <label style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;display:block;margin-bottom:6px;">Hero Eyebrow Text</label>
+      <input type="text" id="tw-tagline" value="${tweaks.heroTagline}" style="width:100%;padding:8px 10px;border:1px solid #eee;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:14px;outline:none;" />
+      <label style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="tw-stats" ${tweaks.showStats ? 'checked' : ''} /> Show Hero Stats
+      </label>
+    `;
+    document.body.appendChild(tweaksPanel);
+
+    tweaksPanel.querySelector('#tw-color').addEventListener('input', e => {
+      tweaks.accentColor = e.target.value;
+      applyTweaks();
+      window.parent.postMessage({type:'__edit_mode_set_keys', edits: tweaks}, '*');
+    });
+    tweaksPanel.querySelector('#tw-tagline').addEventListener('input', e => {
+      tweaks.heroTagline = e.target.value;
+      applyTweaks();
+      window.parent.postMessage({type:'__edit_mode_set_keys', edits: tweaks}, '*');
+    });
+    tweaksPanel.querySelector('#tw-stats').addEventListener('change', e => {
+      tweaks.showStats = e.target.checked;
+      applyTweaks();
+      window.parent.postMessage({type:'__edit_mode_set_keys', edits: tweaks}, '*');
+    });
+
+    window.addEventListener('message', e => {
+      if (e.data?.type === '__activate_edit_mode') tweaksPanel.style.display = 'block';
+      if (e.data?.type === '__deactivate_edit_mode') tweaksPanel.style.display = 'none';
+    });
+    window.parent.postMessage({type:'__edit_mode_available'}, '*');
+  </script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

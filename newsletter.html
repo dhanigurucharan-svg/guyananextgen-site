@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Newsletter — Guyana Next Gen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-deep: #0b2e1f;
+      --green-mid: #174d34;
+      --green-bright: #2a7a50;
+      --gold: #90c94a;
+      --gold-light: #aee070;
+      --teal: #2a7a50;
+      --teal-soft: #5fbf6b;
+      --sea: #4faa5a;
+      --gold-rich: #5fbf6b;
+      --gold-deep: #1a4d2e;
+      --cream: #f5f0e8;
+      --paper: #e8efd8;
+      --paper-warm: #d6e5c4;
+      --paper-tint: #dfecd4;
+      --ink: #14201a;
+      --ink-soft: #3d4a43;
+      --white: #ffffff;
+      --rule: rgba(20,32,26,0.16);
+      --rule-soft: rgba(20,32,26,0.1);
+      --font-display: 'Cormorant Garamond', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--paper);
+      color: var(--ink);
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(ellipse 1100px 500px at 100% 0%, rgba(42,122,80,0.36) 0%, transparent 65%),
+        radial-gradient(ellipse 900px 600px at 0% 30%, rgba(79,170,90,0.26) 0%, transparent 65%),
+        radial-gradient(ellipse 800px 500px at 100% 55%, rgba(42,122,80,0.32) 0%, transparent 65%),
+        radial-gradient(ellipse 700px 400px at 10% 80%, rgba(155,217,122,0.32) 0%, transparent 65%),
+        radial-gradient(ellipse 1200px 700px at 100% 100%, rgba(26,77,46,0.22) 0%, transparent 65%),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><circle cx='14' cy='14' r='1' fill='%235fbf6b' opacity='0.28'/></svg>");
+      background-attachment: fixed;
+      background-size: auto, auto, auto, auto, auto, 28px 28px;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV (dark — consistent with site) */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; height: 72px; background: rgba(11,30,20,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(144,201,74,0.2); }
+    .nav-logo { display: flex; align-items: center; gap: 12px; }
+    .nav-logo-mark { width: 38px; height: 38px; background: var(--gold); clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--green-deep); flex-shrink: 0; }
+    .nav-logo-text { display: flex; flex-direction: column; line-height: 1; }
+    .nav-logo-main { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 0.02em; }
+    .nav-logo-sub { font-size: 9px; font-weight: 500; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 2px; }
+    .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
+    .nav-links a { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.75); letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-login { font-family: var(--font-body); font-size: 13px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.8); background: none; border: 1px solid rgba(255,255,255,0.25); padding: 9px 22px; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+    .btn-login:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-signup { font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--green-deep); background: var(--gold); border: none; padding: 10px 24px; border-radius: 2px; cursor: pointer; transition: background 0.2s; }
+    .btn-signup:hover { background: var(--gold-light); }
+
+    /* MASTHEAD — broadsheet feel, on paper */
+    .masthead {
+      padding: 96px 72px 24px;
+      background:
+        linear-gradient(180deg, rgba(42,122,80,0.12) 0%, rgba(42,122,80,0) 100%),
+        var(--paper);
+      border-bottom: 1px solid var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+    .masthead::before {
+      content: '';
+      position: absolute;
+      right: -150px; top: 40px;
+      width: 620px; height: 620px;
+      background-image:
+        repeating-radial-gradient(circle at center,
+          transparent 0px, transparent 22px,
+          rgba(42,122,80,0.26) 22px, rgba(42,122,80,0.26) 23px);
+      pointer-events: none;
+      mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 75%);
+      -webkit-mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 75%);
+    }
+    .masthead::after {
+      content: '';
+      position: absolute;
+      left: -120px; bottom: -120px;
+      width: 460px; height: 460px;
+      background:
+        radial-gradient(circle at 40% 40%, rgba(155,217,122,0.34), transparent 65%);
+      pointer-events: none;
+    }
+    .masthead-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 18px; margin-bottom: 14px;
+      border-bottom: 1px solid var(--rule);
+      font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .masthead-top-left { display: flex; align-items: center; gap: 14px; }
+    .masthead-top-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-bright); }
+    .masthead-title {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 3.5vw, 52px);
+      font-weight: 700; color: var(--ink);
+      line-height: 1; letter-spacing: -0.015em;
+      margin: 0;
+    }
+    .masthead-title em { font-style: italic; color: var(--green-bright); font-weight: 400; }
+    .masthead-bottom {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 48px; padding-top: 20px;
+      border-top: 4px double var(--ink);
+    }
+    .masthead-tagline {
+      font-family: var(--font-display);
+      font-style: italic; font-size: 18px;
+      color: var(--ink-soft); max-width: 540px; line-height: 1.5;
+    }
+    .masthead-stat {
+      font-family: var(--font-display);
+      font-size: 13px; color: var(--ink-soft); letter-spacing: 0.06em;
+      text-align: right; line-height: 1.5;
+    }
+    .masthead-stat strong { color: var(--green-bright); font-weight: 700; font-style: normal; }
+
+    /* STICKY STRIP */
+    .strip {
+      background: var(--paper);
+      border-bottom: 1px solid var(--rule);
+      border-top: 1px solid var(--teal);
+      padding: 14px 72px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 72px; z-index: 50;
+      box-shadow: 0 1px 0 var(--rule-soft);
+    }
+    .strip::before {
+      content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 1px;
+      background: linear-gradient(90deg, var(--gold-rich) 0%, var(--gold-deep) 50%, var(--gold-rich) 100%);
+    }
+    .strip-nav { display: flex; gap: 32px; }
+    .strip-nav a {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--ink-soft); transition: color 0.2s; padding: 4px 0;
+    }
+    .strip-nav a:hover, .strip-nav a.active { color: var(--teal); }
+    .strip-nav a.active { border-bottom: 1px solid var(--teal); }
+    .strip-meta {
+      font-family: var(--font-display); font-size: 13px;
+      color: var(--ink-soft); font-style: italic;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .strip-meta::before {
+      content: ''; display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--gold-rich); flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(42,122,80,0.28);
+      animation: pulseDot 2.4s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%,100% { box-shadow: 0 0 0 3px rgba(42,122,80,0.28); }
+      50% { box-shadow: 0 0 0 5px rgba(42,122,80,0.16); }
+    }
+
+    /* CONTAINER */
+    .container { padding: 56px 72px 0; }
+    .narrow { padding: 0 72px 80px; }
+
+    /* SECTION HEADERS — minimal */
+    .sec-head {
+      display: flex; align-items: baseline; gap: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--ink);
+      margin-bottom: 4px;
+      position: relative;
+    }
+    .sec-head::after {
+      content: ''; position: absolute; left: 0; bottom: -3px;
+      width: 90px; height: 3px;
+      background: linear-gradient(90deg, var(--teal) 0%, var(--green-bright) 100%);
+    }
+
+    /* WAVE DIVIDER — between sections */
+    .wave-divider {
+      height: 36px;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 36' preserveAspectRatio='none'><path d='M0,18 Q150,4 300,18 T600,18 T900,18 T1200,18' stroke='%231d5a66' stroke-width='1.5' fill='none' opacity='0.32'/><path d='M0,24 Q150,10 300,24 T600,24 T900,24 T1200,24' stroke='%232a7a50' stroke-width='1.5' fill='none' opacity='0.28'/></svg>");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      margin: 8px 0;
+    }
+    .sec-head-small {
+      display: flex; align-items: baseline; gap: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 4px;
+    }
+    .sec-h-small {
+      font-family: var(--font-display); font-size: 16px; font-weight: 700;
+      color: var(--ink); letter-spacing: 0.01em;
+      text-transform: uppercase; letter-spacing: 0.16em;
+    }
+    .sec-h-large {
+      font-family: var(--font-display); font-size: 30px; font-weight: 700;
+      color: var(--ink); letter-spacing: -0.01em;
+    }
+    .sec-meta { font-size: 11px; color: var(--ink-soft); font-style: italic; letter-spacing: 0.06em; }
+    .sec-rule-line { flex: 1; height: 1px; background: var(--rule); align-self: center; }
+    .btn-collection {
+      margin-left: auto;
+      font-family: var(--font-body); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--green-bright); background: transparent;
+      border: none; padding: 0;
+      border-bottom: 1px solid var(--green-bright);
+      padding-bottom: 3px;
+      transition: color 0.2s;
+    }
+    .btn-collection:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+    /* FEATURED — single-column cover only */
+    .featured-wrapper {
+      display: grid; grid-template-columns: 1fr 480px 1fr;
+      align-items: center; gap: 32px;
+      padding: 36px 0 28px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+    .featured-wrapper::before {
+      content: ''; position: absolute; left: 50%; top: -1px;
+      transform: translateX(-50%);
+      width: 160px; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      z-index: 2;
+    }
+
+    /* JAGUAR EYES — cropped from image, gold-filled */
+    .jaguar-eye {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: min(360px, 28%); aspect-ratio: 1 / 1;
+      pointer-events: none; z-index: 0;
+      filter: drop-shadow(0 3px 8px rgba(20,60,40,0.35));
+      opacity: 0.95;
+      background: linear-gradient(170deg,
+        #d4f5d8 0%,
+        #9bd97a 18%,
+        #4faa5a 38%,
+        #2a7a50 50%,
+        #c8e090 60%,
+        #5fbf6b 72%,
+        #1a4d2e 100%);
+      clip-path: circle(50% at 50% 50%);
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .jaguar-eye.left { left: 1%; }
+    .jaguar-eye.right { right: 1%; }
+    .jaguar-eye svg {
+      width: 100%; height: 100%;
+      display: block;
+      clip-path: circle(50% at 50% 50%);
+    }
+    .bg-cursive {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 760px; height: 760px;
+      pointer-events: none;
+      z-index: 0;
+      filter: drop-shadow(0 2px 3px rgba(20,60,40,0.35)) drop-shadow(0 1px 0 rgba(255,255,255,0.5));
+    }
+    .bg-cursive svg { width: 100%; height: 100%; display: block; }
+    .bg-cursive text {
+      font-family: 'Pinyon Script', cursive;
+      font-size: 56px;
+      letter-spacing: 0.04em;
+      fill: url(#goldGrad);
+      opacity: 0.95;
+    }
+    .featured-side {
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding: 12px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .featured-side.right { align-items: flex-start; text-align: left; }
+    .fs-volume {
+      font-family: var(--font-display); font-style: italic;
+      font-size: clamp(36px, 4vw, 56px); font-weight: 600;
+      color: var(--ink); line-height: 0.95; letter-spacing: -0.01em;
+    }
+    .fs-volume span { color: var(--teal); font-style: italic; }
+
+    .featured-issue {
+      display: grid; grid-template-columns: 1fr;
+      max-width: 480px; margin: 0;
+      gap: 0;
+      padding: 0;
+      border-bottom: none;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .feat-cover {
+      background: var(--paper-warm);
+      padding: 0;
+      display: flex; flex-direction: column;
+      min-height: 0;
+      border: 1px solid var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+    .feat-flag {
+      position: relative;
+      border-bottom: 1px solid var(--ink);
+      background: #009E49;
+      aspect-ratio: 5/3;
+      flex: none;
+    }
+    .feat-flag svg { display: block; width: 100%; height: 100%; }
+    .feat-flag-label {
+      position: absolute; top: 10px; left: 12px;
+      font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,0.85); font-family: var(--font-display); font-style: italic;
+      background: rgba(20,32,26,0.4); padding: 3px 8px;
+      backdrop-filter: blur(4px);
+    }
+    .feat-cover-body {
+      padding: 14px 18px 16px;
+      display: flex; flex-direction: column; gap: 6px;
+      background: var(--paper-warm);
+    }
+    .cover-issue-num {
+      font-family: var(--font-display); font-style: italic;
+      font-size: 11px; color: var(--teal); letter-spacing: 0.06em;
+    }
+    .cover-title {
+      font-family: var(--font-display); font-size: 18px; font-weight: 700;
+      line-height: 1.15; color: var(--ink);
+    }
+    .cover-meta {
+      font-size: 9.5px; color: var(--ink-soft); letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .feat-body { display: flex; flex-direction: column; justify-content: center; padding: 8px 0; }
+    .feat-eyebrow {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: 16px;
+      padding-bottom: 14px; border-bottom: 1px solid var(--rule);
+    }
+    .feat-headline {
+      font-family: var(--font-display); font-size: clamp(32px, 3.4vw, 44px); font-weight: 700;
+      line-height: 1.05; color: var(--ink); margin-bottom: 16px; letter-spacing: -0.01em;
+    }
+    .feat-desc {
+      font-family: var(--font-display); font-style: italic;
+      font-size: 17px; line-height: 1.55; color: var(--ink-soft); margin-bottom: 24px;
+    }
+    .feat-byline {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 0; margin-bottom: 16px;
+      border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    }
+    .fb-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal) 0%, var(--green-bright) 100%);
+      color: var(--paper); font-family: var(--font-display);
+      font-weight: 700; font-size: 14px; letter-spacing: 0.05em;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .fb-name { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .fb-meta { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; letter-spacing: 0.04em; }
+    .feat-detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+      margin-bottom: 26px;
+    }
+    .fd-label {
+      font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-soft); margin-bottom: 4px;
+    }
+    .fd-value {
+      font-family: var(--font-display); font-style: italic;
+      font-size: 14px; color: var(--ink);
+    }
+    .btn-read {
+      align-self: flex-start;
+      font-family: var(--font-body); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--green-bright); background: transparent;
+      padding: 0; border: none;
+      border-bottom: 1px solid var(--green-bright);
+      padding-bottom: 4px; transition: color 0.2s;
+    }
+    .btn-read:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+    /* NEWSROOM LAYOUT */
+    .newsroom { display: grid; grid-template-columns: 1fr 300px; gap: 64px; padding: 0 72px 80px; }
+
+    /* STORY ROW — uniform throughout */
+    .story-row {
+      display: grid; grid-template-columns: 140px 1fr auto; gap: 28px;
+      padding: 26px 0;
+      border-bottom: 1px solid var(--rule-soft);
+      align-items: start;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .story-row:first-child { padding-top: 22px; }
+    .story-row:last-child { border-bottom: none; }
+    .story-row:hover .sr-headline { color: var(--green-bright); }
+    .sr-thumb { width: 140px; aspect-ratio: 4/3; overflow: hidden; background: var(--paper-warm); }
+    .sr-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+    .story-row:hover .sr-thumb img { transform: scale(1.02); }
+    .sr-body { display: flex; flex-direction: column; }
+    .sr-headline {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--ink); line-height: 1.18; margin-bottom: 8px;
+      transition: color 0.2s; letter-spacing: -0.005em;
+    }
+    .sr-dek {
+      font-size: 13.5px; color: var(--ink-soft); line-height: 1.55;
+      margin-bottom: 10px;
+    }
+    .sr-foot {
+      font-size: 11px; color: rgba(20,32,26,0.45); letter-spacing: 0.04em;
+    }
+    .sr-foot strong { color: var(--ink); font-weight: 500; }
+    .sr-meta {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
+      text-transform: uppercase; color: rgba(20,32,26,0.45);
+      white-space: nowrap; align-self: flex-start; padding-top: 4px;
+      font-family: var(--font-display); font-style: italic;
+    }
+
+    /* SIDEBAR */
+    .sidebar { display: flex; flex-direction: column; gap: 40px; position: sticky; top: 156px; height: fit-content; }
+
+    .side-card { background: transparent; padding: 0; }
+    .side-h {
+      font-family: var(--font-display); font-size: 14px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.18em;
+      color: var(--ink); padding-bottom: 12px;
+      border-bottom: 1px solid var(--ink); margin-bottom: 4px;
+    }
+
+    .most-read .mr-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline; }
+    .most-read .mr-item:last-child { border-bottom: none; }
+    .mr-num {
+      font-family: var(--font-display); font-style: italic;
+      font-size: 22px; font-weight: 600;
+      color: var(--green-bright); line-height: 0.9;
+      width: 26px; flex-shrink: 0;
+    }
+    .mr-headline {
+      font-family: var(--font-display); font-size: 15px; font-weight: 700;
+      color: var(--ink); line-height: 1.25; cursor: pointer; transition: color 0.2s;
+    }
+    .mr-headline:hover { color: var(--green-bright); }
+
+    /* Subscribe sidecard */
+    .side-card.sub-card {
+      background: linear-gradient(140deg, var(--paper-warm) 0%, var(--paper-tint) 100%);
+      border: 1px solid var(--ink);
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+    }
+    .side-card.sub-card::before {
+      content: ''; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
+      border: 1px solid var(--rule); pointer-events: none;
+    }
+    .side-card.sub-card::after {
+      content: ''; position: absolute; right: -40px; bottom: -40px;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(42,122,80,0.22), transparent 70%);
+      pointer-events: none;
+    }
+    .ss-eyebrow {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: 10px; position: relative; z-index: 1;
+    }
+    .ss-title {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--ink); line-height: 1.15; margin-bottom: 8px;
+      position: relative; z-index: 1;
+    }
+    .ss-desc {
+      font-size: 12.5px; color: var(--ink-soft); line-height: 1.55;
+      margin-bottom: 16px; position: relative; z-index: 1;
+    }
+    .ss-form { display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; }
+    .ss-form input {
+      padding: 10px 12px; font-family: var(--font-body); font-size: 13px;
+      color: var(--ink); background: var(--paper);
+      border: 1px solid var(--ink); outline: none;
+    }
+    .ss-form input::placeholder { color: rgba(20,32,26,0.4); }
+    .ss-form input:focus { border-color: var(--teal); }
+    .ss-btn {
+      font-family: var(--font-body); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--paper); background: var(--ink);
+      border: 1px solid var(--ink); padding: 12px; cursor: pointer;
+    }
+    .ss-btn:hover { background: var(--teal); border-color: var(--teal); }
+    .ss-foot {
+      font-size: 10px; color: rgba(20,32,26,0.4); text-align: center; margin-top: 10px;
+      position: relative; z-index: 1; font-style: italic;
+    }
+
+    /* TOPICS */
+    .topics-list { display: flex; flex-direction: column; }
+    .topics-item {
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding: 11px 0; border-bottom: 1px solid var(--rule-soft);
+      font-size: 13px; color: var(--ink); cursor: pointer; transition: color 0.15s;
+    }
+    .topics-item:last-child { border-bottom: none; }
+    .topics-item:hover { color: var(--green-bright); }
+    .topics-item .count {
+      font-family: var(--font-display); font-style: italic;
+      font-size: 11.5px; color: rgba(20,32,26,0.4); font-weight: 400;
+    }
+
+    /* PAST ISSUES STRIP */
+    .past-strip {
+      padding: 60px 72px 80px;
+      border-top: 1px solid var(--rule);
+      position: relative;
+      background: linear-gradient(180deg, rgba(42,122,80,0.12) 0%, rgba(42,122,80,0) 60%);
+    }
+    .past-strip::before {
+      content: ''; position: absolute; left: 50%; top: -3px;
+      transform: translateX(-50%);
+      width: 160px; height: 5px;
+      background: linear-gradient(90deg, var(--teal), var(--green-bright), var(--teal));
+    }
+    .past-strip-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
+    .past-strip-h {
+      font-family: var(--font-display); font-size: 16px; font-weight: 700;
+      color: var(--ink); text-transform: uppercase; letter-spacing: 0.16em;
+    }
+    .past-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+    .past-item {
+      display: flex; flex-direction: column; gap: 8px; cursor: pointer;
+      padding-top: 14px; border-top: 1px solid var(--rule);
+    }
+    .past-num {
+      display: flex; justify-content: space-between;
+      font-size: 11px; letter-spacing: 0.08em;
+      color: rgba(20,32,26,0.5); font-family: var(--font-display); font-style: italic;
+    }
+    .past-date { color: rgba(20,32,26,0.4); }
+    .past-headline {
+      font-family: var(--font-display); font-size: 16px; font-weight: 700;
+      color: var(--ink); line-height: 1.2;
+    }
+    .past-item:hover .past-headline { color: var(--green-bright); }
+
+    @media (max-width: 1100px) {
+      .newsroom { grid-template-columns: 1fr; padding: 0 24px 80px; gap: 40px; }
+      .sidebar { position: static; }
+      .featured-wrapper { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto 28px; gap: 16px; }
+      .featured-side.right { align-items: center; text-align: center; padding: 8px 0; order: 3; }
+      .featured-issue { order: 2; max-width: 100%; }
+      .bg-cursive { width: 460px; height: 460px; }
+      .bg-cursive text { font-size: 38px; }
+    }
+    @media (max-width: 900px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .masthead, .strip, .container, .past-strip { padding-left: 24px; padding-right: 24px; }
+      .featured-issue { grid-template-columns: 1fr; gap: 24px; }
+      .story-row { grid-template-columns: 100px 1fr; gap: 16px; }
+      .sr-thumb { width: 100px; }
+      .sr-meta { display: none; }
+      .past-grid { grid-template-columns: 1fr 1fr; }
+      .masthead-bottom { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .masthead-stat { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-mark">G</div>
+      <div class="nav-logo-text">
+        <span class="nav-logo-main">Guyana Next Gen</span>
+        <span class="nav-logo-sub">Business Exchange Forum</span>
+      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="newsletter.html" class="active">Newsletter</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="btn-login" id="btn-open-login">Log In</button>
+      <button class="btn-signup" id="btn-open-signup">Sign Up</button>
+    </div>
+  </nav>
+
+  <!-- MASTHEAD (broadsheet feel) -->
+  <section class="masthead">
+    <div class="masthead-top">
+      <div class="masthead-top-left">
+        <span class="masthead-top-dot"></span>
+        <span>Monday Dispatch</span>
+      </div>
+      <div>Issue No. 47 · May 18, 2026</div>
+    </div>
+    <div class="masthead-title">The <em>Newsletter</em></div>
+  </section>
+
+  <!-- STICKY STRIP -->
+  <div class="strip">
+    <div class="strip-nav">
+      <a href="#" class="active">Latest</a>
+      <a href="#">Long Reads</a>
+      <a href="#">Archive</a>
+    </div>
+    <div class="strip-meta">Updated minutes ago</div>
+  </div>
+
+  <!-- THIS WEEK'S ISSUE (compact featured) -->
+  <div class="container">
+    <div class="sec-head-small">
+      <div class="sec-h-small">This Week's Issue</div>
+      <div class="sec-rule-line"></div>
+      <div class="sec-meta">May 18, 2026</div>
+    </div>
+
+    <div class="featured-wrapper">
+
+      <!-- Jaguar Eye LEFT -->
+      <div class="jaguar-eye left">
+        <svg viewBox="411 0 632 632" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="invertJag">
+              <feColorMatrix type="matrix" values="-1 0 0 0 1  0 -1 0 0 1  0 0 -1 0 1  0 0 0 1 0"/>
+              <feComponentTransfer>
+                <feFuncR type="discrete" tableValues="0 0 0 0 0 1 1 1 1 1"/>
+                <feFuncG type="discrete" tableValues="0 0 0 0 0 1 1 1 1 1"/>
+                <feFuncB type="discrete" tableValues="0 0 0 0 0 1 1 1 1 1"/>
+              </feComponentTransfer>
+            </filter>
+            <mask id="eyeMaskLeft">
+              <image href="uploads/10aab522885151.56319e35d120f.webp" x="0" y="0" width="1454" height="632" filter="url(#invertJag)"/>
+            </mask>
+            <linearGradient id="jagGold" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#d4f5d8"/>
+              <stop offset="18%" stop-color="#9bd97a"/>
+              <stop offset="38%" stop-color="#4faa5a"/>
+              <stop offset="50%" stop-color="#2a7a50"/>
+              <stop offset="60%" stop-color="#c8e090"/>
+              <stop offset="72%" stop-color="#5fbf6b"/>
+              <stop offset="100%" stop-color="#1a4d2e"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="1454" height="632" fill="url(#jagGold)" mask="url(#eyeMaskLeft)"/>
+        </svg>
+      </div>
+
+      <div class="bg-cursive">
+        <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#d4f5d8"/>
+              <stop offset="18%" stop-color="#9bd97a"/>
+              <stop offset="38%" stop-color="#4faa5a"/>
+              <stop offset="50%" stop-color="#2a7a50"/>
+              <stop offset="60%" stop-color="#c8e090"/>
+              <stop offset="72%" stop-color="#5fbf6b"/>
+              <stop offset="100%" stop-color="#1a4d2e"/>
+            </linearGradient>
+            <path id="orbit" d="M 400,400 m -340,0 a 340,340 0 1,1 680,0 a 340,340 0 1,1 -680,0"/>
+          </defs>
+          <text>
+            <textPath href="#orbit" startOffset="0">Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese ·</textPath>
+          </text>
+        </svg>
+      </div>
+
+      <div></div>
+
+      <div class="featured-issue">
+        <div class="feat-cover">
+          <div class="feat-flag">
+            <div class="feat-flag-label">The Golden Arrowhead</div>
+            <svg viewBox="0 0 500 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="500" height="300" fill="#009E49"/>
+              <polygon points="0,0 500,150 0,300" fill="#ffffff"/>
+              <polygon points="0,12 478,150 0,288" fill="#FCD116"/>
+              <polygon points="0,0 290,150 0,300" fill="#000000"/>
+              <polygon points="0,10 268,150 0,290" fill="#CE1126"/>
+            </svg>
+          </div>
+          <div class="feat-cover-body">
+            <div class="cover-issue-num">Issue No. 47 — The Republic Edition</div>
+            <div class="cover-title">A Quiet Reset for Guyana's Capital Markets</div>
+            <div class="cover-meta">9 min read · May 18, 2026</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="featured-side right">
+        <div class="fs-volume">No. <span>47</span></div>
+      </aside>
+
+      <!-- Jaguar Eye RIGHT -->
+      <div class="jaguar-eye right">
+        <svg viewBox="411 0 632 632" xmlns="http://www.w3.org/2000/svg" style="transform: scaleX(-1);">
+          <defs>
+            <mask id="eyeMaskRight">
+              <image href="uploads/10aab522885151.56319e35d120f.webp" x="0" y="0" width="1454" height="632" filter="url(#invertJag)"/>
+            </mask>
+          </defs>
+          <rect x="0" y="0" width="1454" height="632" fill="url(#jagGold)" mask="url(#eyeMaskRight)"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="wave-divider"></div>
+
+  <!-- NEWSROOM (Latest + sidebar) -->
+  <div class="newsroom">
+
+    <div>
+      <div class="sec-head">
+        <div class="sec-h-large">Latest</div>
+        <a href="#" class="btn-collection">Full Collection →</a>
+      </div>
+
+      <!-- Uniform story rows -->
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1605007493699-af65834f8a00?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">A quiet reset for Guyana's capital markets</div>
+          <div class="sr-dek">After a quarter of choppy oil receipts, the Bank of Guyana is reshaping liquidity rules for state-owned enterprises — and private capital is paying close attention.</div>
+          <div class="sr-foot">By <strong>Priya Singh</strong> · May 18</div>
+        </div>
+        <div class="sr-meta">9 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Six months of offshore oil receipts — the numbers that actually matter</div>
+          <div class="sr-dek">Cutting through the announcement-cycle, here's what the public accounts say about cashflow, royalties, and what's actually been spent.</div>
+          <div class="sr-foot">By <strong>Marcus James</strong> · May 17</div>
+        </div>
+        <div class="sr-meta">6 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">The diaspora investment problem — and one Brooklyn fund's plan to solve it</div>
+          <div class="sr-dek">A new vehicle aims to channel diaspora savings into local SMEs without the usual friction. We sat down with its founders.</div>
+          <div class="sr-foot">By <strong>Anika Williams</strong> · May 16</div>
+        </div>
+        <div class="sr-meta">7 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Inside Kanuku Capital Labs — Guyana's first SME-lending fintech</div>
+          <div class="sr-dek">A 12-person team in Georgetown is building credit infrastructure that big banks won't touch. We spent a week in the office to find out why.</div>
+          <div class="sr-foot">By <strong>Devon Roberts</strong> · May 16</div>
+        </div>
+        <div class="sr-meta">11 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Pitch Night Berbice — three highlights from a packed Saturday</div>
+          <div class="sr-dek">The third Pitch Night drew a hundred and forty operators. Three companies walked out with term sheets in hand.</div>
+          <div class="sr-foot">By <strong>Devon Roberts</strong> · May 14</div>
+        </div>
+        <div class="sr-meta">4 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Republic, GBTI, Demerara Bank — who's actually lending to SMEs in Q2?</div>
+          <div class="sr-dek">An on-the-ground look at where the credit is flowing this quarter — and where it's not.</div>
+          <div class="sr-foot">By <strong>Marcus James</strong> · May 17</div>
+        </div>
+        <div class="sr-meta">8 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Georgetown commercial rents up 22% YoY — has the oil bump priced out local SMEs?</div>
+          <div class="sr-dek">Three brokers, two developers, and one frustrated tenant on the state of office space in the capital.</div>
+          <div class="sr-foot">By <strong>Priya Singh</strong> · May 15</div>
+        </div>
+        <div class="sr-meta">5 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1604594849809-dfedbc827105?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Stabroek block — what an EPA fine actually changes for operators</div>
+          <div class="sr-dek">After last month's penalty, we walked through the regulatory reset with two former EPA officials.</div>
+          <div class="sr-foot">By <strong>Marcus James</strong> · May 13</div>
+        </div>
+        <div class="sr-meta">9 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">New rules of origin — what the Q3 export framework changes for Guyanese producers</div>
+          <div class="sr-dek">A plain-English explainer of the rule changes, with reaction from three exporters who'll feel them first.</div>
+          <div class="sr-foot">By <strong>Anika Williams</strong> · May 15</div>
+        </div>
+        <div class="sr-meta">7 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Rice or rooftop solar? Berbice's land-use question keeps getting harder</div>
+          <div class="sr-dek">A growing solar industry is putting pressure on prime rice land. Who decides the trade-off?</div>
+          <div class="sr-foot">By <strong>Priya Singh</strong> · May 14</div>
+        </div>
+        <div class="sr-meta">8 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Iwokrama Software's logistics platform crosses 100 Caribbean customers</div>
+          <div class="sr-dek">Built in Georgetown, sold in Trinidad, Jamaica, and Barbados. A look at the playbook.</div>
+          <div class="sr-foot">By <strong>Devon Roberts</strong> · May 11</div>
+        </div>
+        <div class="sr-meta">4 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">UG, GTI, and the missing middle — where Guyana's tech talent pipeline breaks</div>
+          <div class="sr-dek">Engineering graduates are leaving. The reasons are more economic than cultural.</div>
+          <div class="sr-foot">By <strong>Devon Roberts</strong> · May 13</div>
+        </div>
+        <div class="sr-meta">6 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">Local content law — a six-month progress report from inside the Ministry</div>
+          <div class="sr-dek">What's enforced, what's optional, and what private operators are still confused about.</div>
+          <div class="sr-foot">By <strong>Priya Singh</strong> · May 12</div>
+        </div>
+        <div class="sr-meta">9 min</div>
+      </div>
+
+      <div class="story-row">
+        <div class="sr-thumb"><img src="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&h=300&fit=crop&auto=format" alt="" /></div>
+        <div class="sr-body">
+          <div class="sr-headline">CARICOM Development Bank opens a $40M facility for Guyanese MSMEs</div>
+          <div class="sr-dek">Eligibility criteria, application timeline, and what borrowers are saying about the rates.</div>
+          <div class="sr-foot">By <strong>Anika Williams</strong> · May 12</div>
+        </div>
+        <div class="sr-meta">3 min</div>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="side-card">
+        <div class="side-h">Most Read</div>
+        <div class="most-read">
+          <div class="mr-item">
+            <div class="mr-num">01</div>
+            <div class="mr-headline">A quiet reset for Guyana's capital markets</div>
+          </div>
+          <div class="mr-item">
+            <div class="mr-num">02</div>
+            <div class="mr-headline">Inside Kanuku Capital Labs — Guyana's first SME-lending fintech</div>
+          </div>
+          <div class="mr-item">
+            <div class="mr-num">03</div>
+            <div class="mr-headline">The diaspora investment problem — and one Brooklyn fund's plan to solve it</div>
+          </div>
+          <div class="mr-item">
+            <div class="mr-num">04</div>
+            <div class="mr-headline">Pitch Night Berbice — three highlights from a packed Saturday</div>
+          </div>
+          <div class="mr-item">
+            <div class="mr-num">05</div>
+            <div class="mr-headline">Rice or rooftop solar? Berbice's land-use question</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-card sub-card">
+        <div class="ss-eyebrow">Free · Every Monday</div>
+        <div class="ss-title">Get the Dispatch in your inbox</div>
+        <div class="ss-desc">One email each Monday with the week's most important signals — before the market opens.</div>
+        <div class="ss-form">
+          <input type="email" placeholder="you@example.com" />
+          <button class="ss-btn">Subscribe Free</button>
+        </div>
+        <div class="ss-foot">14,000+ readers · Unsubscribe anytime</div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-h">Topics</div>
+        <div class="topics-list">
+          <div class="topics-item"><span>Investment &amp; Finance</span><span class="count">82</span></div>
+          <div class="topics-item"><span>Oil &amp; Energy</span><span class="count">64</span></div>
+          <div class="topics-item"><span>Tech &amp; Innovation</span><span class="count">58</span></div>
+          <div class="topics-item"><span>Agriculture</span><span class="count">47</span></div>
+          <div class="topics-item"><span>Trade &amp; Export</span><span class="count">39</span></div>
+          <div class="topics-item"><span>Policy &amp; Regulation</span><span class="count">36</span></div>
+          <div class="topics-item"><span>Diaspora Capital</span><span class="count">22</span></div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- PAST ISSUES -->
+  <section class="past-strip">
+    <div class="past-strip-head">
+      <div class="past-strip-h">From the Archive</div>
+      <div class="sec-rule-line"></div>
+      <a href="#" class="btn-collection">Full Archive →</a>
+    </div>
+    <div class="past-grid">
+      <div class="past-item">
+        <div class="past-num"><span>Issue 46</span><span class="past-date">May 11, 2026</span></div>
+        <div class="past-headline">The CARICOM export window is closing — who's ready?</div>
+      </div>
+      <div class="past-item">
+        <div class="past-num"><span>Issue 45</span><span class="past-date">May 4, 2026</span></div>
+        <div class="past-headline">Fintech in Georgetown — a reality check at year one</div>
+      </div>
+      <div class="past-item">
+        <div class="past-num"><span>Issue 44</span><span class="past-date">Apr 27, 2026</span></div>
+        <div class="past-headline">Rice, sugar, or something else? Berbice's land question</div>
+      </div>
+      <div class="past-item">
+        <div class="past-num"><span>Issue 43</span><span class="past-date">Apr 20, 2026</span></div>
+        <div class="past-headline">Inside the SME loan squeeze — a banker's view</div>
+      </div>
+      <div class="past-item">
+        <div class="past-num"><span>Issue 42</span><span class="past-date">Apr 13, 2026</span></div>
+        <div class="past-headline">Six months of offshore oil — the numbers that matter</div>
+      </div>
+      <div class="past-item">
+        <div class="past-num"><span>Issue 41</span><span class="past-date">Apr 6, 2026</span></div>
+        <div class="past-headline">The diaspora capital problem — and how to solve it</div>
+      </div>
+      <div class="past-item">
+        <div class="past-num"><span>Issue 40</span><span class="past-date">Mar 30, 2026</span></div>
+        <div class="past-headline">Five Guyanese founders to watch in 2026</div>
+      </div>
+      <div class="past-item">
+        <div class="past-num"><span>Issue 39</span><span class="past-date">Mar 23, 2026</span></div>
+        <div class="past-headline">The quiet boom in Georgetown's construction sector</div>
+      </div>
+    </div>
+  </section>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
