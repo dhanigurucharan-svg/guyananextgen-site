@@ -1008,18 +1008,7 @@
       font-size: 12px;
     }
 
-    /* ── ANIMATIONS ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .fade-up { opacity: 0; }
-    .fade-up.animated { animation: fadeUp 0.7s ease forwards; }
-    .fade-up-1 { animation-delay: 0.1s; }
-    .fade-up-2 { animation-delay: 0.25s; }
-    .fade-up-3 { animation-delay: 0.4s; }
-    .fade-up-4 { animation-delay: 0.55s; }
+    /* ── ANIMATIONS (disabled) ── */
 
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
@@ -1062,17 +1051,17 @@
   <!-- HERO -->
   <section class="hero">
     <div class="hero-content">
-      <div class="hero-eyebrow fade-up fade-up-1">
+      <div class="hero-eyebrow">
         <div class="hero-eyebrow-line"></div>
         <span class="hero-eyebrow-text">Guyana's Premier Business Network</span>
       </div>
-      <h1 class="hero-title fade-up fade-up-2">
+      <h1 class="hero-title">
         Connect, <em>Trade</em><br>& Build the<br>Next Generation
       </h1>
-      <p class="hero-desc fade-up fade-up-3">
+      <p class="hero-desc">
         The hub for Guyanese entrepreneurs, investors, and business leaders to share ideas, forge partnerships, and drive economic growth.
       </p>
-      <div class="hero-ctas fade-up fade-up-4">
+      <div class="hero-ctas">
         <a href="#newsletter" class="btn-primary">Subscribe to Newsletter</a>
       </div>
 
@@ -1223,10 +1212,6 @@
 
     applyTweaks();
 
-    // Trigger fade-up animations after load
-    window.addEventListener('load', () => {
-      document.querySelectorAll('.fade-up').forEach(el => el.classList.add('animated'));
-    });
 
     // Tweaks panel
     const tweaksPanel = document.createElement('div');
