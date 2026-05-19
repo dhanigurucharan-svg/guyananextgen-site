@@ -608,7 +608,7 @@
         <span class="masthead-top-dot"></span>
         <span>Monday Dispatch</span>
       </div>
-      <div>Issue No. 47 · May 18, 2026</div>
+      <div></div>
     </div>
     <div class="masthead-title">The <em>Jaguar</em></div>
   </section>
@@ -778,14 +778,8 @@
 
       <div class="side-card">
         <div class="side-h">Topics</div>
-        <div class="topics-list">
-          <div class="topics-item"><span>Investment &amp; Finance</span><span class="count">82</span></div>
-          <div class="topics-item"><span>Oil &amp; Energy</span><span class="count">64</span></div>
-          <div class="topics-item"><span>Tech &amp; Innovation</span><span class="count">58</span></div>
-          <div class="topics-item"><span>Agriculture</span><span class="count">47</span></div>
-          <div class="topics-item"><span>Trade &amp; Export</span><span class="count">39</span></div>
-          <div class="topics-item"><span>Policy &amp; Regulation</span><span class="count">36</span></div>
-          <div class="topics-item"><span>Diaspora Capital</span><span class="count">22</span></div>
+        <div class="topics-list" id="topics-list">
+          <div style="padding:11px 0;font-size:13px;color:rgba(20,32,26,0.45);">Loading...</div>
         </div>
       </div>
 
@@ -851,6 +845,25 @@
               <div class="mr-headline">${a.title}</div>
             </a>
           `).join('');
+        }
+
+        // Populate Topics sidebar with real counts
+        const topicsList = document.getElementById('topics-list');
+        if (topicsList) {
+          const counts = {};
+          for (const a of data.articles) {
+            if (a.category && a.category !== 'Archive' && a.category !== 'Weekly Issue') {
+              counts[a.category] = (counts[a.category] || 0) + 1;
+            }
+          }
+          const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+          if (sorted.length === 0) {
+            topicsList.innerHTML = '<div style="padding:11px 0;font-size:13px;color:rgba(20,32,26,0.45);">No topics yet.</div>';
+          } else {
+            topicsList.innerHTML = sorted.map(([name, count]) =>
+              `<div class="topics-item"><span>${name}</span><span class="count">${count}</span></div>`
+            ).join('');
+          }
         }
 
         // Populate From the Archive with articles tagged "Archive"
