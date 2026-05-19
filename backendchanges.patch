@@ -1,0 +1,2259 @@
+From 4c342416a81d03e44b4ede45d896d5b10431e47d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 19 May 2026 02:03:28 +0000
+Subject: [PATCH] Add backend: API routes, data layer, and
+ newsletter/events/about pages
+
+- lib/data.ts: typed static data for articles, issues, events, team
+- POST /api/subscribe: email validation + in-memory subscriber store
+- GET /api/articles: filterable article list with sidebar data
+- GET /api/events: filterable upcoming events + past events
+- /newsletter: server-rendered page with client SubscribeForm component
+- /events: server-rendered page with client EventsFilter for type filtering
+- /about: server-rendered team page
+- SiteNav: shared nav component used across all three new pages
+
+https://claude.ai/code/session_018nqUaE7SZi3BU1quLZF9yp
+---
+ app/about/about.css              |  75 ++++++
+ app/about/page.tsx               |  49 ++++
+ app/api/articles/route.ts        |  19 ++
+ app/api/events/route.ts          |  21 ++
+ app/api/subscribe/route.ts       |  32 +++
+ app/components/SiteNav.tsx       |  75 ++++++
+ app/events/EventsFilter.tsx      | 107 ++++++++
+ app/events/events.css            | 240 +++++++++++++++++
+ app/events/page.tsx              | 118 +++++++++
+ app/newsletter/SubscribeForm.tsx |  52 ++++
+ app/newsletter/newsletter.css    | 440 +++++++++++++++++++++++++++++++
+ app/newsletter/page.tsx          | 219 +++++++++++++++
+ lib/data.ts                      | 321 ++++++++++++++++++++++
+ package-lock.json                | 108 --------
+ 14 files changed, 1768 insertions(+), 108 deletions(-)
+ create mode 100644 app/about/about.css
+ create mode 100644 app/about/page.tsx
+ create mode 100644 app/api/articles/route.ts
+ create mode 100644 app/api/events/route.ts
+ create mode 100644 app/api/subscribe/route.ts
+ create mode 100644 app/components/SiteNav.tsx
+ create mode 100644 app/events/EventsFilter.tsx
+ create mode 100644 app/events/events.css
+ create mode 100644 app/events/page.tsx
+ create mode 100644 app/newsletter/SubscribeForm.tsx
+ create mode 100644 app/newsletter/newsletter.css
+ create mode 100644 app/newsletter/page.tsx
+ create mode 100644 lib/data.ts
+
+diff --git a/app/about/about.css b/app/about/about.css
+new file mode 100644
+index 0000000..d0f7294
+--- /dev/null
++++ b/app/about/about.css
+@@ -0,0 +1,75 @@
++@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
++
++.ab-body {
++  font-family: 'DM Sans', sans-serif;
++  background: #faf7f0;
++  color: #14201a;
++  background-image:
++    radial-gradient(ellipse 900px 500px at 100% 0%, rgba(42,122,80,0.14) 0%, transparent 60%),
++    radial-gradient(ellipse 700px 500px at 0% 40%, rgba(144,201,74,0.12) 0%, transparent 60%),
++    radial-gradient(ellipse 800px 600px at 100% 80%, rgba(42,122,80,0.10) 0%, transparent 60%);
++  background-attachment: fixed;
++  min-height: 100vh;
++}
++
++.ab-main {
++  max-width: 900px;
++  margin: 0 auto;
++  padding: 160px 32px 100px;
++}
++
++.ab-tagline {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: clamp(28px, 3.4vw, 44px);
++  font-weight: 500;
++  line-height: 1.3;
++  color: #14201a;
++  text-align: center;
++  max-width: 720px;
++  margin: 0 auto 8px;
++  letter-spacing: -0.005em;
++}
++.ab-tagline em { font-style: italic; color: #2a7a50; font-weight: 600; }
++
++.ab-rule {
++  width: 60px; height: 1px;
++  background: #2a7a50;
++  margin: 48px auto 56px;
++}
++
++.ab-team-label {
++  text-align: center;
++  font-size: 11px; font-weight: 600;
++  letter-spacing: 0.22em; text-transform: uppercase;
++  color: #2a7a50;
++  margin-bottom: 36px;
++}
++
++.ab-team {
++  display: grid;
++  grid-template-columns: repeat(2, 1fr);
++  gap: 48px 56px;
++  max-width: 720px;
++  margin: 0 auto;
++}
++
++.ab-person { display: flex; gap: 20px; align-items: center; }
++.ab-person-img {
++  width: 84px; height: 84px;
++  border-radius: 50%;
++  overflow: hidden; flex-shrink: 0;
++  background: rgba(20,32,26,0.06);
++}
++.ab-person-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
++.ab-person-name {
++  font-family: 'Cormorant Garamond', serif; font-size: 22px;
++  font-weight: 700; color: #14201a; line-height: 1.15;
++}
++.ab-person-role {
++  font-size: 12px; color: #4a564f;
++  letter-spacing: 0.04em; margin-top: 3px;
++}
++
++@media (max-width: 700px) {
++  .ab-team { grid-template-columns: 1fr; gap: 32px; max-width: 380px; }
++}
+diff --git a/app/about/page.tsx b/app/about/page.tsx
+new file mode 100644
+index 0000000..241d807
+--- /dev/null
++++ b/app/about/page.tsx
+@@ -0,0 +1,49 @@
++import type { Metadata } from 'next'
++import Image from 'next/image'
++import SiteNav from '@/app/components/SiteNav'
++import { teamMembers } from '@/lib/data'
++import './about.css'
++
++export const metadata: Metadata = {
++  title: 'About — Guyana Next Gen',
++  description: 'A platform by Guyanese, for Guyanese — connecting the people building the next decade.',
++}
++
++export default function AboutPage() {
++  return (
++    <div className="ab-body">
++      <SiteNav />
++      <main className="ab-main">
++        <p className="ab-tagline">
++          A platform by Guyanese, for Guyanese — connecting the people building the{' '}
++          <em>next decade</em>.
++        </p>
++
++        <div className="ab-rule" />
++
++        <div className="ab-team-label">The Team</div>
++
++        <div className="ab-team">
++          {teamMembers.map((member) => (
++            <div className="ab-person" key={member.name}>
++              <div className="ab-person-img">
++                <Image
++                  src={member.imageUrl}
++                  alt={member.name}
++                  width={84}
++                  height={84}
++                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
++                  unoptimized
++                />
++              </div>
++              <div>
++                <div className="ab-person-name">{member.name}</div>
++                <div className="ab-person-role">{member.role}</div>
++              </div>
++            </div>
++          ))}
++        </div>
++      </main>
++    </div>
++  )
++}
+diff --git a/app/api/articles/route.ts b/app/api/articles/route.ts
+new file mode 100644
+index 0000000..f8af875
+--- /dev/null
++++ b/app/api/articles/route.ts
+@@ -0,0 +1,19 @@
++import { articles, mostRead, topics, currentIssue, pastIssues } from '@/lib/data'
++
++export async function GET(request: Request) {
++  const { searchParams } = new URL(request.url)
++  const topic = searchParams.get('topic')
++
++  const filtered = topic
++    ? articles.filter((a) => a.topic === topic)
++    : articles
++
++  return Response.json({
++    articles: filtered,
++    mostRead,
++    topics,
++    currentIssue,
++    pastIssues,
++    total: filtered.length,
++  })
++}
+diff --git a/app/api/events/route.ts b/app/api/events/route.ts
+new file mode 100644
+index 0000000..3c59bf9
+--- /dev/null
++++ b/app/api/events/route.ts
+@@ -0,0 +1,21 @@
++import { upcomingEvents, pastEvents } from '@/lib/data'
++import type { Event } from '@/lib/data'
++
++const VALID_TYPES: Event['type'][] = ['summit', 'workshop', 'networking', 'pitch', 'virtual']
++
++export async function GET(request: Request) {
++  const { searchParams } = new URL(request.url)
++  const type = searchParams.get('type') as Event['type'] | null
++
++  const filtered =
++    type && VALID_TYPES.includes(type)
++      ? upcomingEvents.filter((e) => e.type === type)
++      : upcomingEvents
++
++  return Response.json({
++    upcoming: filtered,
++    past: pastEvents,
++    featured: upcomingEvents.find((e) => e.featured) ?? null,
++    total: filtered.length,
++  })
++}
+diff --git a/app/api/subscribe/route.ts b/app/api/subscribe/route.ts
+new file mode 100644
+index 0000000..0181dbb
+--- /dev/null
++++ b/app/api/subscribe/route.ts
+@@ -0,0 +1,32 @@
++const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
++
++// In-memory store for demonstration; replace with a database in production.
++const subscribers = new Set<string>()
++
++export async function POST(request: Request) {
++  let body: unknown
++  try {
++    body = await request.json()
++  } catch {
++    return Response.json({ error: 'Invalid JSON' }, { status: 400 })
++  }
++
++  if (typeof body !== 'object' || body === null || !('email' in body)) {
++    return Response.json({ error: 'Missing email field' }, { status: 400 })
++  }
++
++  const email = (body as Record<string, unknown>).email
++  if (typeof email !== 'string' || !EMAIL_RE.test(email)) {
++    return Response.json({ error: 'Invalid email address' }, { status: 422 })
++  }
++
++  const normalised = email.toLowerCase().trim()
++
++  if (subscribers.has(normalised)) {
++    return Response.json({ message: 'Already subscribed' }, { status: 200 })
++  }
++
++  subscribers.add(normalised)
++
++  return Response.json({ message: 'Subscribed successfully' }, { status: 201 })
++}
+diff --git a/app/components/SiteNav.tsx b/app/components/SiteNav.tsx
+new file mode 100644
+index 0000000..1843ee7
+--- /dev/null
++++ b/app/components/SiteNav.tsx
+@@ -0,0 +1,75 @@
++'use client'
++
++import Link from 'next/link'
++import { usePathname } from 'next/navigation'
++
++export default function SiteNav() {
++  const pathname = usePathname()
++
++  return (
++    <nav style={{
++      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
++      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
++      padding: '0 48px', height: '72px',
++      background: 'rgba(11,30,20,0.96)', backdropFilter: 'blur(12px)',
++      borderBottom: '1px solid rgba(144,201,74,0.2)',
++    }}>
++      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
++        <div style={{
++          width: '38px', height: '38px',
++          background: '#90c94a',
++          clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',
++          display: 'flex', alignItems: 'center', justifyContent: 'center',
++          fontFamily: "'Cormorant Garamond', serif", fontSize: '16px',
++          fontWeight: 700, color: '#0b2e1f', flexShrink: 0,
++        }}>G</div>
++        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
++          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}>
++            Guyana Next Gen
++          </span>
++          <span style={{ fontSize: '9px', fontWeight: 500, color: '#90c94a', letterSpacing: '0.18em', textTransform: 'uppercase', marginTop: '2px' }}>
++            Business Exchange Forum
++          </span>
++        </div>
++      </Link>
++
++      <ul style={{ display: 'flex', alignItems: 'center', gap: '36px', listStyle: 'none', margin: 0, padding: 0 }}>
++        {[
++          { label: 'Newsletter', href: '/newsletter' },
++          { label: 'Events', href: '/events' },
++          { label: 'About', href: '/about' },
++        ].map(({ label, href }) => (
++          <li key={href}>
++            <Link
++              href={href}
++              style={{
++                fontSize: '13px', fontWeight: 500,
++                color: pathname === href ? '#90c94a' : 'rgba(255,255,255,0.75)',
++                letterSpacing: '0.06em', textTransform: 'uppercase',
++                textDecoration: 'none',
++              }}
++            >
++              {label}
++            </Link>
++          </li>
++        ))}
++      </ul>
++
++      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
++        <button style={{
++          fontFamily: 'var(--font-body, DM Sans, sans-serif)', fontSize: '13px', fontWeight: 500,
++          letterSpacing: '0.06em', textTransform: 'uppercase',
++          color: 'rgba(255,255,255,0.8)', background: 'none',
++          border: '1px solid rgba(255,255,255,0.25)', padding: '9px 22px',
++          borderRadius: '2px', cursor: 'pointer',
++        }}>Log In</button>
++        <button style={{
++          fontFamily: 'var(--font-body, DM Sans, sans-serif)', fontSize: '13px', fontWeight: 600,
++          letterSpacing: '0.06em', textTransform: 'uppercase',
++          color: '#0b2e1f', background: '#90c94a',
++          border: 'none', padding: '10px 24px', borderRadius: '2px', cursor: 'pointer',
++        }}>Sign Up</button>
++      </div>
++    </nav>
++  )
++}
+diff --git a/app/events/EventsFilter.tsx b/app/events/EventsFilter.tsx
+new file mode 100644
+index 0000000..96ca29f
+--- /dev/null
++++ b/app/events/EventsFilter.tsx
+@@ -0,0 +1,107 @@
++'use client'
++
++import { useState } from 'react'
++import Image from 'next/image'
++import type { Event } from '@/lib/data'
++
++const FILTERS: { label: string; value: Event['type'] | 'all' }[] = [
++  { label: 'All', value: 'all' },
++  { label: 'Summits', value: 'summit' },
++  { label: 'Workshops', value: 'workshop' },
++  { label: 'Networking', value: 'networking' },
++  { label: 'Pitch Nights', value: 'pitch' },
++  { label: 'Virtual', value: 'virtual' },
++]
++
++const TAG_CLASS: Record<Event['type'], string> = {
++  summit: 'tag-summit',
++  workshop: 'tag-workshop',
++  networking: 'tag-networking',
++  pitch: 'tag-pitch',
++  virtual: 'tag-virtual',
++}
++
++const TAG_LABEL: Record<Event['type'], string> = {
++  summit: 'Summit',
++  workshop: 'Workshop',
++  networking: 'Networking',
++  pitch: 'Pitch Night',
++  virtual: 'Virtual',
++}
++
++const CalendarIcon = () => (
++  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
++    <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.4" />
++    <path d="M1 6h12" stroke="currentColor" strokeWidth="1.4" />
++    <path d="M4 1v2M10 1v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
++  </svg>
++)
++
++const PinIcon = () => (
++  <svg width="12" height="14" viewBox="0 0 11 14" fill="none">
++    <path d="M5.5 1C3.015 1 1 3.015 1 5.5c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5C10 3.015 7.985 1 5.5 1Z" stroke="currentColor" strokeWidth="1.3" />
++    <circle cx="5.5" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1.3" />
++  </svg>
++)
++
++export default function EventsFilter({ events }: { events: Event[] }) {
++  const [active, setActive] = useState<Event['type'] | 'all'>('all')
++
++  const filtered = active === 'all' ? events : events.filter((e) => e.type === active)
++
++  return (
++    <>
++      <div className="filter-bar">
++        {FILTERS.map(({ label, value }) => (
++          <button
++            key={value}
++            className={`filter-btn${active === value ? ' active' : ''}`}
++            onClick={() => setActive(value)}
++          >
++            {label}
++          </button>
++        ))}
++      </div>
++
++      <section className="events-section">
++        <div className="events-section-label">Upcoming Events</div>
++        <div className="events-grid">
++          {filtered.map((event) => (
++            <div className="event-card" key={event.id}>
++              <div className="event-card-img">
++                <Image
++                  src={event.imageUrl}
++                  alt={event.title}
++                  width={400}
++                  height={180}
++                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
++                  unoptimized
++                />
++              </div>
++              <div className="event-card-body">
++                <span className={`event-type-tag ${TAG_CLASS[event.type]}`}>{TAG_LABEL[event.type]}</span>
++                <div className="event-title">{event.title}</div>
++                <div className="event-meta-row">
++                  <div className="event-meta-item">
++                    <CalendarIcon />
++                    {event.date}
++                  </div>
++                  <div className="event-meta-item">
++                    <PinIcon />
++                    {event.location}
++                  </div>
++                </div>
++                <div className="event-card-footer">
++                  {event.spotsLeft != null && (
++                    <span className="event-spots">{event.spotsLeft} spots left</span>
++                  )}
++                  <a href="#" className="event-register">Register →</a>
++                </div>
++              </div>
++            </div>
++          ))}
++        </div>
++      </section>
++    </>
++  )
++}
+diff --git a/app/events/events.css b/app/events/events.css
+new file mode 100644
+index 0000000..aa69f88
+--- /dev/null
++++ b/app/events/events.css
+@@ -0,0 +1,240 @@
++@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
++
++.ev-body {
++  font-family: 'DM Sans', sans-serif;
++  background: #f5f0e8;
++  color: #14201a;
++  overflow-x: hidden;
++  background-image:
++    radial-gradient(ellipse 900px 500px at 100% 0%, rgba(42,122,80,0.16) 0%, transparent 60%),
++    radial-gradient(ellipse 700px 500px at 0% 40%, rgba(144,201,74,0.12) 0%, transparent 60%),
++    radial-gradient(ellipse 800px 600px at 100% 80%, rgba(42,122,80,0.10) 0%, transparent 60%);
++  background-attachment: fixed;
++  min-height: 100vh;
++}
++
++/* PAGE HERO */
++.page-hero {
++  padding: 140px 72px 72px;
++  background: linear-gradient(180deg, rgba(42,122,80,0.10) 0%, transparent 100%), #f5f0e8;
++  position: relative;
++  overflow: hidden;
++}
++.page-hero::before {
++  content: '';
++  position: absolute; inset: 0;
++  background: radial-gradient(ellipse 60% 100% at 80% 50%, rgba(42,122,80,0.06) 0%, transparent 70%);
++}
++.page-hero-eyebrow {
++  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
++}
++.page-hero-eyebrow::before { content: ''; width: 40px; height: 1px; background: #90c94a; }
++.page-hero-eyebrow span {
++  font-size: 11px; font-weight: 600; letter-spacing: 0.2em;
++  text-transform: uppercase; color: #90c94a;
++}
++.page-hero h1 {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: clamp(48px, 5vw, 72px);
++  font-weight: 700; color: #0b2e1f; line-height: 1.05;
++  position: relative; z-index: 1;
++}
++.page-hero h1 em { font-style: italic; color: #90c94a; }
++.page-hero-desc {
++  font-size: 16px; font-weight: 300; line-height: 1.75;
++  color: rgba(20,32,26,0.6); max-width: 520px;
++  margin-top: 16px; position: relative; z-index: 1;
++}
++.next-event-watermark {
++  position: absolute; right: 72px; top: 50%; transform: translateY(-50%);
++  pointer-events: none; text-align: right; padding-top: 36px;
++}
++.nw-label {
++  font-family: 'Cormorant Garamond', serif; font-size: 11px; font-weight: 600;
++  letter-spacing: 0.22em; text-transform: uppercase; color: rgba(42,122,80,0.7);
++  margin-bottom: 8px;
++}
++.nw-day {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: clamp(80px, 10vw, 140px); font-weight: 700;
++  color: rgba(11,46,31,0.16); line-height: 0.9; letter-spacing: -0.03em;
++}
++.nw-month {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: clamp(28px, 3.5vw, 48px); font-weight: 400; font-style: italic;
++  color: rgba(11,46,31,0.3); letter-spacing: 0.06em; margin-top: 4px;
++}
++
++/* FILTER BAR */
++.filter-bar {
++  background: #fff;
++  border-bottom: 1px solid rgba(11,30,20,0.08);
++  padding: 0 72px;
++  display: flex; align-items: center; gap: 4px;
++  position: sticky; top: 72px; z-index: 50;
++}
++.filter-btn {
++  font-family: 'DM Sans', sans-serif;
++  font-size: 12px; font-weight: 600;
++  letter-spacing: 0.08em; text-transform: uppercase;
++  color: rgba(11,30,20,0.45);
++  background: none; border: none;
++  padding: 18px 20px;
++  cursor: pointer;
++  border-bottom: 2px solid transparent;
++  transition: all 0.2s;
++}
++.filter-btn:hover { color: #0b2e1f; }
++.filter-btn.active { color: #0b2e1f; border-bottom-color: #90c94a; }
++
++/* FEATURED EVENT */
++.featured-wrap {
++  padding: 64px 72px 0;
++  background: transparent;
++  border-top: 1px solid rgba(11,30,20,0.08);
++}
++.featured-label {
++  font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
++  text-transform: uppercase; color: #90c94a; margin-bottom: 20px;
++}
++.featured-event {
++  display: grid; grid-template-columns: 1fr 1fr;
++  background: #fff;
++  border: 1px solid rgba(11,30,20,0.08);
++  border-radius: 10px;
++  overflow: hidden;
++  min-height: 380px;
++  box-shadow: 0 4px 28px rgba(11,30,20,0.06);
++}
++.featured-event-img { position: relative; overflow: hidden; }
++.featured-event-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
++.featured-event-img::after {
++  content: '';
++  position: absolute; inset: 0;
++  background: linear-gradient(90deg, transparent 60%, rgba(245,240,232,0.7) 100%);
++}
++.featured-event-body {
++  padding: 48px;
++  display: flex; flex-direction: column; justify-content: center;
++}
++.featured-tag {
++  display: inline-block;
++  font-size: 10px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
++  color: #0b2e1f; background: #90c94a;
++  padding: 5px 12px; border-radius: 40px;
++  margin-bottom: 20px; align-self: flex-start;
++}
++.featured-title {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: 36px; font-weight: 700; color: #0b2e1f; line-height: 1.15;
++  margin-bottom: 14px;
++}
++.featured-desc {
++  font-size: 14px; color: rgba(20,32,26,0.6); line-height: 1.7;
++  margin-bottom: 28px;
++}
++.featured-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
++.featured-meta-item {
++  display: flex; align-items: center; gap: 10px;
++  font-size: 13px; color: rgba(20,32,26,0.55);
++}
++.featured-meta-item svg { color: #90c94a; flex-shrink: 0; }
++.btn-primary {
++  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
++  letter-spacing: 0.08em; text-transform: uppercase;
++  color: #0b2e1f; background: #90c94a;
++  border: none; padding: 14px 32px; border-radius: 2px;
++  cursor: pointer; text-decoration: none; display: inline-block; align-self: flex-start;
++  transition: background 0.2s;
++}
++.btn-primary:hover { background: #aee070; }
++
++/* EVENTS GRID */
++.events-section { padding: 56px 72px 100px; }
++.events-section-label {
++  font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
++  color: rgba(11,30,20,0.45); margin-bottom: 24px;
++}
++.events-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
++
++.event-card {
++  background: #fff;
++  border: 1px solid rgba(11,30,20,0.08);
++  border-radius: 8px;
++  overflow: hidden;
++  transition: transform 0.25s, box-shadow 0.25s;
++  display: flex; flex-direction: column;
++}
++.event-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(11,30,20,0.1); }
++.event-card-img { height: 180px; overflow: hidden; }
++.event-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
++.event-card:hover .event-card-img img { transform: scale(1.04); }
++.event-card-body { padding: 24px 24px 20px; flex: 1; display: flex; flex-direction: column; }
++
++.event-type-tag {
++  display: inline-block; align-self: flex-start;
++  font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
++  padding: 4px 10px; border-radius: 40px; margin-bottom: 12px;
++}
++.tag-summit { background: rgba(201,168,76,0.15); color: #8a6b1a; }
++.tag-workshop { background: rgba(42,122,80,0.12); color: #174d34; }
++.tag-networking { background: rgba(11,46,31,0.08); color: #0b2e1f; }
++.tag-pitch { background: rgba(201,168,76,0.1); color: #8a6b1a; }
++.tag-virtual { background: rgba(42,122,80,0.1); color: #174d34; }
++
++.event-title {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: 21px; font-weight: 700; color: #0b2e1f;
++  line-height: 1.25; margin-bottom: 10px; flex: 1;
++}
++.event-meta-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
++.event-meta-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(11,30,20,0.5); }
++.event-meta-item svg { color: #2a7a50; flex-shrink: 0; }
++.event-card-footer {
++  display: flex; align-items: center; justify-content: space-between;
++  padding-top: 16px; border-top: 1px solid rgba(11,30,20,0.07);
++}
++.event-spots { font-size: 11px; color: rgba(11,30,20,0.4); }
++.event-register {
++  font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
++  color: #0b2e1f; text-decoration: none;
++  border-bottom: 1px solid rgba(11,30,20,0.3); padding-bottom: 1px;
++  transition: color 0.2s, border-color 0.2s;
++}
++.event-register:hover { color: #2a7a50; border-color: #2a7a50; }
++
++/* PAST EVENTS */
++.past-section { padding: 56px 72px 100px; background: transparent; border-top: 1px solid rgba(11,46,31,0.15); }
++.past-title {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: 32px; font-weight: 700; color: #0b2e1f; margin-bottom: 28px;
++}
++.past-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
++.past-card {
++  border-radius: 6px; overflow: hidden; position: relative;
++  aspect-ratio: 4/3;
++  border: 1px solid rgba(11,46,31,0.15);
++}
++.past-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
++.past-card:hover img { transform: scale(1.05); }
++.past-card-overlay {
++  position: absolute; inset: 0;
++  background: linear-gradient(0deg, rgba(11,30,20,0.85) 0%, transparent 60%);
++  padding: 16px;
++  display: flex; flex-direction: column; justify-content: flex-end;
++}
++.past-card-title {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3;
++}
++.past-card-date { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; }
++
++@media (max-width: 900px) {
++  .page-hero, .featured-wrap, .events-section, .past-section { padding-left: 24px; padding-right: 24px; }
++  .filter-bar { padding: 0 24px; }
++  .featured-event { grid-template-columns: 1fr; }
++  .featured-event-img { height: 220px; }
++  .events-grid { grid-template-columns: 1fr; }
++  .past-grid { grid-template-columns: 1fr 1fr; }
++  .next-event-watermark { display: none; }
++}
+diff --git a/app/events/page.tsx b/app/events/page.tsx
+new file mode 100644
+index 0000000..3d0befc
+--- /dev/null
++++ b/app/events/page.tsx
+@@ -0,0 +1,118 @@
++import type { Metadata } from 'next'
++import Image from 'next/image'
++import SiteNav from '@/app/components/SiteNav'
++import EventsFilter from './EventsFilter'
++import { upcomingEvents, pastEvents } from '@/lib/data'
++import './events.css'
++
++export const metadata: Metadata = {
++  title: 'Events — Guyana Next Gen',
++  description: 'Summits, workshops, pitch nights and networking events connecting Guyana\'s business community.',
++}
++
++const CalendarIcon = () => (
++  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
++    <rect x="1" y="2" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.4" />
++    <path d="M1 6h12" stroke="currentColor" strokeWidth="1.4" />
++    <path d="M4 1v2M10 1v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
++  </svg>
++)
++
++const PinIcon = () => (
++  <svg width="12" height="14" viewBox="0 0 11 14" fill="none">
++    <path d="M5.5 1C3.015 1 1 3.015 1 5.5c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5C10 3.015 7.985 1 5.5 1Z" stroke="currentColor" strokeWidth="1.3" />
++    <circle cx="5.5" cy="5.5" r="1.5" stroke="currentColor" strokeWidth="1.3" />
++  </svg>
++)
++
++export default function EventsPage() {
++  const featured = upcomingEvents.find((e) => e.featured)!
++  const nonFeatured = upcomingEvents.filter((e) => !e.featured)
++
++  return (
++    <div className="ev-body">
++      <SiteNav />
++
++      {/* PAGE HERO */}
++      <section className="page-hero">
++        <div className="page-hero-eyebrow"><span>Guyana Next Gen</span></div>
++        <h1>Upcoming <em>Events</em></h1>
++        <p className="page-hero-desc">
++          Summits, workshops, pitch nights and networking events connecting Guyana&apos;s business community.
++        </p>
++        <div className="next-event-watermark">
++          <div className="nw-label">Next Event</div>
++          <div className="nw-day">14</div>
++          <div className="nw-month">May 2025</div>
++        </div>
++      </section>
++
++      <div style={{ background: '#f5f0e8' }}>
++        {/* FEATURED EVENT */}
++        <div className="featured-wrap">
++          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
++            <div className="featured-label">Featured Event</div>
++            <div style={{ flex: 1, height: '1px', background: 'rgba(11,30,20,0.1)' }} />
++          </div>
++          <div className="featured-event">
++            <div className="featured-event-img">
++              <Image
++                src={featured.imageUrl}
++                alt={featured.title}
++                width={800}
++                height={600}
++                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
++                unoptimized
++              />
++            </div>
++            <div className="featured-event-body">
++              <span className="featured-tag">Summit</span>
++              <div className="featured-title">{featured.title}</div>
++              <p className="featured-desc">{featured.description}</p>
++              <div className="featured-meta">
++                <div className="featured-meta-item">
++                  <CalendarIcon />
++                  {featured.date}
++                </div>
++                <div className="featured-meta-item">
++                  <PinIcon />
++                  {featured.location}
++                </div>
++              </div>
++              <a href="#" className="btn-primary">Register Now →</a>
++            </div>
++          </div>
++        </div>
++
++        {/* EVENTS GRID — client component for filter interactivity */}
++        <EventsFilter events={nonFeatured} />
++
++        {/* PAST EVENTS */}
++        <section className="past-section">
++          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
++            <div className="past-title" style={{ marginBottom: 0 }}>Past Events</div>
++            <div style={{ flex: 1, height: '1px', background: 'rgba(11,46,31,0.15)' }} />
++          </div>
++          <div className="past-grid">
++            {pastEvents.map((ev) => (
++              <div className="past-card" key={ev.id}>
++                <Image
++                  src={ev.imageUrl}
++                  alt={ev.title}
++                  width={400}
++                  height={300}
++                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
++                  unoptimized
++                />
++                <div className="past-card-overlay">
++                  <div className="past-card-title">{ev.title}</div>
++                  <div className="past-card-date">{ev.date}</div>
++                </div>
++              </div>
++            ))}
++          </div>
++        </section>
++      </div>
++    </div>
++  )
++}
+diff --git a/app/newsletter/SubscribeForm.tsx b/app/newsletter/SubscribeForm.tsx
+new file mode 100644
+index 0000000..601ea82
+--- /dev/null
++++ b/app/newsletter/SubscribeForm.tsx
+@@ -0,0 +1,52 @@
++'use client'
++
++import { useState } from 'react'
++
++export default function SubscribeForm() {
++  const [email, setEmail] = useState('')
++  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
++
++  async function handleSubmit(e: React.FormEvent) {
++    e.preventDefault()
++    setStatus('loading')
++    try {
++      const res = await fetch('/api/subscribe', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify({ email }),
++      })
++      if (res.ok || res.status === 200) {
++        setStatus('success')
++      } else {
++        setStatus('error')
++      }
++    } catch {
++      setStatus('error')
++    }
++  }
++
++  return (
++    <form className="ss-form" onSubmit={handleSubmit}>
++      <input
++        type="email"
++        placeholder="you@example.com"
++        value={email}
++        onChange={(e) => setEmail(e.target.value)}
++        required
++        disabled={status === 'loading' || status === 'success'}
++      />
++      <button
++        type="submit"
++        className={`ss-btn${status === 'success' ? ' success' : ''}`}
++        disabled={status === 'loading' || status === 'success'}
++      >
++        {status === 'loading' ? 'Subscribing…' : status === 'success' ? '✓ Subscribed!' : 'Subscribe Free'}
++      </button>
++      {status === 'error' && (
++        <p style={{ fontSize: '11px', color: '#c0392b', marginTop: '4px' }}>
++          Something went wrong. Please try again.
++        </p>
++      )}
++    </form>
++  )
++}
+diff --git a/app/newsletter/newsletter.css b/app/newsletter/newsletter.css
+new file mode 100644
+index 0000000..9d95b7d
+--- /dev/null
++++ b/app/newsletter/newsletter.css
+@@ -0,0 +1,440 @@
++@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Pinyon+Script&display=swap');
++
++.nl-body {
++  font-family: 'DM Sans', sans-serif;
++  background: #e8efd8;
++  color: #14201a;
++  overflow-x: hidden;
++  background-image:
++    radial-gradient(ellipse 1100px 500px at 100% 0%, rgba(42,122,80,0.36) 0%, transparent 65%),
++    radial-gradient(ellipse 900px 600px at 0% 30%, rgba(79,170,90,0.26) 0%, transparent 65%),
++    radial-gradient(ellipse 800px 500px at 100% 55%, rgba(42,122,80,0.32) 0%, transparent 65%),
++    radial-gradient(ellipse 700px 400px at 10% 80%, rgba(155,217,122,0.32) 0%, transparent 65%),
++    radial-gradient(ellipse 1200px 700px at 100% 100%, rgba(26,77,46,0.22) 0%, transparent 65%),
++    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><circle cx='14' cy='14' r='1' fill='%235fbf6b' opacity='0.28'/></svg>");
++  background-attachment: fixed;
++  background-size: auto, auto, auto, auto, auto, 28px 28px;
++  min-height: 100vh;
++}
++
++/* MASTHEAD */
++.masthead {
++  padding: 96px 72px 24px;
++  background: linear-gradient(180deg, rgba(42,122,80,0.12) 0%, rgba(42,122,80,0) 100%), #e8efd8;
++  border-bottom: 1px solid #14201a;
++  position: relative;
++  overflow: hidden;
++}
++.masthead::before {
++  content: '';
++  position: absolute;
++  right: -150px; top: 40px;
++  width: 620px; height: 620px;
++  background-image: repeating-radial-gradient(circle at center, transparent 0px, transparent 22px, rgba(42,122,80,0.26) 22px, rgba(42,122,80,0.26) 23px);
++  pointer-events: none;
++  mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 75%);
++  -webkit-mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 75%);
++}
++.masthead-top {
++  display: flex; align-items: center; justify-content: space-between;
++  padding-bottom: 18px; margin-bottom: 14px;
++  border-bottom: 1px solid rgba(20,32,26,0.16);
++  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
++  color: #3d4a43;
++}
++.masthead-top-left { display: flex; align-items: center; gap: 14px; }
++.masthead-top-dot { width: 6px; height: 6px; border-radius: 50%; background: #2a7a50; }
++.masthead-title {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: clamp(32px, 3.5vw, 52px);
++  font-weight: 700; color: #14201a;
++  line-height: 1; letter-spacing: -0.015em;
++  margin: 0;
++}
++.masthead-title em { font-style: italic; color: #2a7a50; font-weight: 400; }
++.masthead-bottom {
++  display: flex; align-items: flex-end; justify-content: space-between;
++  gap: 48px; padding-top: 20px;
++  border-top: 4px double #14201a;
++}
++.masthead-tagline {
++  font-family: 'Cormorant Garamond', serif;
++  font-style: italic; font-size: 18px;
++  color: #3d4a43; max-width: 540px; line-height: 1.5;
++}
++.masthead-stat {
++  font-family: 'Cormorant Garamond', serif;
++  font-size: 13px; color: #3d4a43; letter-spacing: 0.06em;
++  text-align: right; line-height: 1.5;
++}
++.masthead-stat strong { color: #2a7a50; font-weight: 700; font-style: normal; }
++
++/* STICKY STRIP */
++.strip {
++  background: #e8efd8;
++  border-bottom: 1px solid rgba(20,32,26,0.1);
++  border-top: 1px solid #2a7a50;
++  padding: 14px 72px;
++  display: flex; align-items: center; justify-content: space-between;
++  position: sticky; top: 72px; z-index: 50;
++  box-shadow: 0 1px 0 rgba(20,32,26,0.1);
++}
++.strip::before {
++  content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 1px;
++  background: linear-gradient(90deg, #5fbf6b 0%, #1a4d2e 50%, #5fbf6b 100%);
++}
++.strip-nav { display: flex; gap: 32px; }
++.strip-nav a {
++  font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
++  color: #3d4a43; padding: 4px 0; text-decoration: none;
++}
++.strip-nav a.active { color: #2a7a50; border-bottom: 1px solid #2a7a50; }
++.strip-meta {
++  font-family: 'Cormorant Garamond', serif; font-size: 13px;
++  color: #3d4a43; font-style: italic;
++  display: flex; align-items: center; gap: 10px;
++}
++.strip-meta::before {
++  content: ''; display: inline-block;
++  width: 8px; height: 8px; border-radius: 50%;
++  background: #5fbf6b; flex-shrink: 0;
++  box-shadow: 0 0 0 3px rgba(42,122,80,0.28);
++  animation: pulseDot 2.4s ease-in-out infinite;
++}
++@keyframes pulseDot {
++  0%,100% { box-shadow: 0 0 0 3px rgba(42,122,80,0.28); }
++  50% { box-shadow: 0 0 0 5px rgba(42,122,80,0.16); }
++}
++
++/* CONTAINER */
++.container { padding: 56px 72px 0; }
++
++/* SECTION HEADERS */
++.sec-head-small {
++  display: flex; align-items: baseline; gap: 12px;
++  padding-bottom: 10px;
++  border-bottom: 1px solid rgba(20,32,26,0.16);
++  margin-bottom: 4px;
++}
++.sec-h-small {
++  font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700;
++  color: #14201a; text-transform: uppercase; letter-spacing: 0.16em;
++}
++.sec-h-large {
++  font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 700;
++  color: #14201a; letter-spacing: -0.01em;
++}
++.sec-meta { font-size: 11px; color: #3d4a43; font-style: italic; letter-spacing: 0.06em; }
++.sec-rule-line { flex: 1; height: 1px; background: rgba(20,32,26,0.16); align-self: center; }
++.btn-collection {
++  margin-left: auto;
++  font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
++  letter-spacing: 0.14em; text-transform: uppercase;
++  color: #2a7a50; background: transparent;
++  border: none; padding: 0;
++  border-bottom: 1px solid #2a7a50;
++  padding-bottom: 3px;
++  cursor: pointer; text-decoration: none;
++}
++
++/* WAVE DIVIDER */
++.wave-divider {
++  height: 36px;
++  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 36' preserveAspectRatio='none'><path d='M0,18 Q150,4 300,18 T600,18 T900,18 T1200,18' stroke='%231d5a66' stroke-width='1.5' fill='none' opacity='0.32'/><path d='M0,24 Q150,10 300,24 T600,24 T900,24 T1200,24' stroke='%232a7a50' stroke-width='1.5' fill='none' opacity='0.28'/></svg>");
++  background-size: 100% 100%;
++  background-repeat: no-repeat;
++  margin: 8px 0;
++}
++
++/* FEATURED WRAPPER */
++.featured-wrapper {
++  display: grid; grid-template-columns: 1fr 480px 1fr;
++  align-items: center; gap: 32px;
++  padding: 36px 0 28px;
++  margin-bottom: 28px;
++  border-bottom: 1px solid #14201a;
++  position: relative;
++  overflow: hidden;
++}
++.featured-wrapper::before {
++  content: ''; position: absolute; left: 50%; top: -1px;
++  transform: translateX(-50%);
++  width: 160px; height: 3px;
++  background: linear-gradient(90deg, transparent, #2a7a50, transparent);
++  z-index: 2;
++}
++
++/* JAGUAR EYES */
++.jaguar-eye {
++  position: absolute; top: 50%; transform: translateY(-50%);
++  width: min(360px, 28%); aspect-ratio: 1 / 1;
++  pointer-events: none; z-index: 0;
++  filter: drop-shadow(0 3px 8px rgba(20,60,40,0.35));
++  opacity: 0.95;
++  background: linear-gradient(170deg,#d4f5d8 0%,#9bd97a 18%,#4faa5a 38%,#2a7a50 50%,#c8e090 60%,#5fbf6b 72%,#1a4d2e 100%);
++  clip-path: circle(50% at 50% 50%);
++  padding: 8px;
++  box-sizing: border-box;
++}
++.jaguar-eye.left { left: 1%; }
++.jaguar-eye.right { right: 1%; }
++.jaguar-eye svg { width: 100%; height: 100%; display: block; clip-path: circle(50% at 50% 50%); }
++
++/* BG CURSIVE */
++.bg-cursive {
++  position: absolute; left: 50%; top: 50%;
++  transform: translate(-50%, -50%);
++  width: 760px; height: 760px;
++  pointer-events: none; z-index: 0;
++  filter: drop-shadow(0 2px 3px rgba(20,60,40,0.35)) drop-shadow(0 1px 0 rgba(255,255,255,0.5));
++}
++.bg-cursive svg { width: 100%; height: 100%; display: block; }
++
++/* FEATURED ISSUE */
++.featured-side {
++  display: flex; flex-direction: column;
++  justify-content: center;
++  padding: 12px 0;
++  position: relative; z-index: 1;
++}
++.featured-side.right { align-items: flex-start; text-align: left; }
++.fs-volume {
++  font-family: 'Cormorant Garamond', serif; font-style: italic;
++  font-size: clamp(36px, 4vw, 56px); font-weight: 600;
++  color: #14201a; line-height: 0.95; letter-spacing: -0.01em;
++}
++.fs-volume span { color: #2a7a50; font-style: italic; }
++
++.featured-issue {
++  max-width: 480px; margin: 0;
++  position: relative; z-index: 1;
++}
++.feat-cover {
++  background: #d6e5c4;
++  display: flex; flex-direction: column;
++  border: 1px solid #14201a;
++  position: relative; overflow: hidden;
++}
++.feat-flag {
++  position: relative;
++  border-bottom: 1px solid #14201a;
++  background: #009E49;
++  aspect-ratio: 5/3;
++  flex: none;
++}
++.feat-flag svg { display: block; width: 100%; height: 100%; }
++.feat-flag-label {
++  position: absolute; top: 10px; left: 12px;
++  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
++  color: rgba(255,255,255,0.85); font-family: 'Cormorant Garamond', serif; font-style: italic;
++  background: rgba(20,32,26,0.4); padding: 3px 8px;
++  backdrop-filter: blur(4px);
++}
++.feat-cover-body {
++  padding: 14px 18px 16px;
++  display: flex; flex-direction: column; gap: 6px;
++  background: #d6e5c4;
++}
++.cover-issue-num {
++  font-family: 'Cormorant Garamond', serif; font-style: italic;
++  font-size: 11px; color: #2a7a50; letter-spacing: 0.06em;
++}
++.cover-title {
++  font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 700;
++  line-height: 1.15; color: #14201a;
++}
++.cover-meta {
++  font-size: 9.5px; color: #3d4a43; letter-spacing: 0.1em; text-transform: uppercase;
++}
++
++/* NEWSROOM */
++.newsroom { display: grid; grid-template-columns: 1fr 300px; gap: 64px; padding: 0 72px 80px; }
++
++/* SECTION HEAD */
++.sec-head {
++  display: flex; align-items: baseline; gap: 14px;
++  padding-bottom: 12px;
++  border-bottom: 1px solid #14201a;
++  margin-bottom: 4px;
++  position: relative;
++}
++.sec-head::after {
++  content: ''; position: absolute; left: 0; bottom: -3px;
++  width: 90px; height: 3px;
++  background: linear-gradient(90deg, #2a7a50 0%, #2a7a50 100%);
++}
++
++/* STORY ROW */
++.story-row {
++  display: grid; grid-template-columns: 140px 1fr auto; gap: 28px;
++  padding: 26px 0;
++  border-bottom: 1px solid rgba(20,32,26,0.1);
++  align-items: start;
++  cursor: pointer;
++}
++.story-row:first-child { padding-top: 22px; }
++.story-row:last-child { border-bottom: none; }
++.sr-thumb { width: 140px; aspect-ratio: 4/3; overflow: hidden; background: #d6e5c4; }
++.sr-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; display: block; }
++.story-row:hover .sr-thumb img { transform: scale(1.02); }
++.sr-body { display: flex; flex-direction: column; }
++.sr-headline {
++  font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700;
++  color: #14201a; line-height: 1.18; margin-bottom: 8px;
++  transition: color 0.2s; letter-spacing: -0.005em;
++}
++.story-row:hover .sr-headline { color: #2a7a50; }
++.sr-dek {
++  font-size: 13.5px; color: #3d4a43; line-height: 1.55;
++  margin-bottom: 10px;
++}
++.sr-foot {
++  font-size: 11px; color: rgba(20,32,26,0.45); letter-spacing: 0.04em;
++}
++.sr-foot strong { color: #14201a; font-weight: 500; }
++.sr-meta {
++  font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
++  text-transform: uppercase; color: rgba(20,32,26,0.45);
++  white-space: nowrap; align-self: flex-start; padding-top: 4px;
++  font-family: 'Cormorant Garamond', serif; font-style: italic;
++}
++
++/* SIDEBAR */
++.sidebar { display: flex; flex-direction: column; gap: 40px; position: sticky; top: 156px; height: fit-content; }
++
++.side-card { background: transparent; padding: 0; }
++.side-h {
++  font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 700;
++  text-transform: uppercase; letter-spacing: 0.18em;
++  color: #14201a; padding-bottom: 12px;
++  border-bottom: 1px solid #14201a; margin-bottom: 4px;
++}
++
++/* MOST READ */
++.most-read .mr-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(20,32,26,0.1); align-items: baseline; }
++.most-read .mr-item:last-child { border-bottom: none; }
++.mr-num {
++  font-family: 'Cormorant Garamond', serif; font-style: italic;
++  font-size: 22px; font-weight: 600;
++  color: #2a7a50; line-height: 0.9;
++  width: 26px; flex-shrink: 0;
++}
++.mr-headline {
++  font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 700;
++  color: #14201a; line-height: 1.25; cursor: pointer;
++}
++.mr-headline:hover { color: #2a7a50; }
++
++/* SUBSCRIBE CARD */
++.sub-card {
++  background: linear-gradient(140deg, #d6e5c4 0%, #dfecd4 100%);
++  border: 1px solid #14201a;
++  padding: 26px;
++  position: relative;
++  overflow: hidden;
++}
++.sub-card::before {
++  content: ''; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
++  border: 1px solid rgba(20,32,26,0.16); pointer-events: none;
++}
++.ss-eyebrow {
++  font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
++  color: #2a7a50; margin-bottom: 10px; position: relative; z-index: 1;
++}
++.ss-title {
++  font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 700;
++  color: #14201a; line-height: 1.15; margin-bottom: 8px;
++  position: relative; z-index: 1;
++}
++.ss-desc {
++  font-size: 12.5px; color: #3d4a43; line-height: 1.55;
++  margin-bottom: 16px; position: relative; z-index: 1;
++}
++.ss-form { display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; }
++.ss-form input {
++  padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px;
++  color: #14201a; background: #e8efd8;
++  border: 1px solid #14201a; outline: none;
++}
++.ss-form input::placeholder { color: rgba(20,32,26,0.4); }
++.ss-form input:focus { border-color: #2a7a50; }
++.ss-btn {
++  font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600;
++  letter-spacing: 0.14em; text-transform: uppercase;
++  color: #e8efd8; background: #14201a;
++  border: 1px solid #14201a; padding: 12px; cursor: pointer;
++  transition: background 0.2s, border-color 0.2s;
++}
++.ss-btn:hover { background: #2a7a50; border-color: #2a7a50; }
++.ss-btn.success { background: #2a7a50; border-color: #2a7a50; }
++.ss-foot {
++  font-size: 10px; color: rgba(20,32,26,0.4); text-align: center; margin-top: 10px;
++  position: relative; z-index: 1; font-style: italic;
++}
++
++/* TOPICS */
++.topics-list { display: flex; flex-direction: column; }
++.topics-item {
++  display: flex; align-items: baseline; justify-content: space-between;
++  padding: 11px 0; border-bottom: 1px solid rgba(20,32,26,0.1);
++  font-size: 13px; color: #14201a; cursor: pointer;
++}
++.topics-item:last-child { border-bottom: none; }
++.topics-item:hover { color: #2a7a50; }
++.topics-item .count {
++  font-family: 'Cormorant Garamond', serif; font-style: italic;
++  font-size: 11.5px; color: rgba(20,32,26,0.4); font-weight: 400;
++}
++
++/* PAST ISSUES */
++.past-strip {
++  padding: 60px 72px 80px;
++  border-top: 1px solid rgba(20,32,26,0.16);
++  position: relative;
++  background: linear-gradient(180deg, rgba(42,122,80,0.12) 0%, rgba(42,122,80,0) 60%);
++}
++.past-strip::before {
++  content: ''; position: absolute; left: 50%; top: -3px;
++  transform: translateX(-50%);
++  width: 160px; height: 5px;
++  background: linear-gradient(90deg, #2a7a50, #2a7a50, #2a7a50);
++}
++.past-strip-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 28px; padding-bottom: 12px; border-bottom: 1px solid #14201a; }
++.past-strip-h {
++  font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700;
++  color: #14201a; text-transform: uppercase; letter-spacing: 0.16em;
++}
++.past-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
++.past-item {
++  display: flex; flex-direction: column; gap: 8px; cursor: pointer;
++  padding-top: 14px; border-top: 1px solid rgba(20,32,26,0.16);
++}
++.past-num {
++  display: flex; justify-content: space-between;
++  font-size: 11px; letter-spacing: 0.08em;
++  color: rgba(20,32,26,0.5); font-family: 'Cormorant Garamond', serif; font-style: italic;
++}
++.past-date { color: rgba(20,32,26,0.4); }
++.past-headline {
++  font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 700;
++  color: #14201a; line-height: 1.2;
++}
++.past-item:hover .past-headline { color: #2a7a50; }
++
++@media (max-width: 1100px) {
++  .newsroom { grid-template-columns: 1fr; padding: 0 24px 80px; gap: 40px; }
++  .sidebar { position: static; }
++  .featured-wrapper { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto 28px; gap: 16px; }
++  .featured-side.right { align-items: center; text-align: center; padding: 8px 0; order: 3; }
++  .featured-issue { order: 2; max-width: 100%; }
++  .bg-cursive { width: 460px; height: 460px; }
++}
++@media (max-width: 900px) {
++  .masthead, .strip, .container, .past-strip { padding-left: 24px; padding-right: 24px; }
++  .story-row { grid-template-columns: 100px 1fr; gap: 16px; }
++  .sr-thumb { width: 100px; }
++  .sr-meta { display: none; }
++  .past-grid { grid-template-columns: 1fr 1fr; }
++  .masthead-bottom { flex-direction: column; align-items: flex-start; gap: 16px; }
++  .masthead-stat { text-align: left; }
++}
+diff --git a/app/newsletter/page.tsx b/app/newsletter/page.tsx
+new file mode 100644
+index 0000000..e48102d
+--- /dev/null
++++ b/app/newsletter/page.tsx
+@@ -0,0 +1,219 @@
++import type { Metadata } from 'next'
++import Image from 'next/image'
++import SiteNav from '@/app/components/SiteNav'
++import SubscribeForm from './SubscribeForm'
++import { articles, mostRead, topics, currentIssue, pastIssues } from '@/lib/data'
++import './newsletter.css'
++
++export const metadata: Metadata = {
++  title: 'Newsletter — Guyana Next Gen',
++  description: "The Monday Dispatch: Guyana's premier business and economics newsletter.",
++}
++
++export default function NewsletterPage() {
++  return (
++    <div className="nl-body">
++      <SiteNav />
++
++      {/* MASTHEAD */}
++      <section className="masthead">
++        <div className="masthead-top">
++          <div className="masthead-top-left">
++            <span className="masthead-top-dot" />
++            <span>Monday Dispatch</span>
++          </div>
++          <div>Issue No. {currentIssue.number} · {currentIssue.date}</div>
++        </div>
++        <div className="masthead-title">The <em>Newsletter</em></div>
++        <div className="masthead-bottom">
++          <p className="masthead-tagline">
++            Guyana&apos;s economy, decoded — every Monday morning before the market opens.
++          </p>
++          <div className="masthead-stat">
++            <strong>14,000+</strong> readers<br />
++            Issue <strong>{currentIssue.number}</strong> · {currentIssue.date}
++          </div>
++        </div>
++      </section>
++
++      {/* STICKY STRIP */}
++      <div className="strip">
++        <nav className="strip-nav">
++          <a href="#latest" className="active">Latest</a>
++          <a href="#archive">Archive</a>
++        </nav>
++        <span className="strip-meta">Updated minutes ago</span>
++      </div>
++
++      {/* THIS WEEK'S ISSUE */}
++      <div className="container">
++        <div className="sec-head-small">
++          <div className="sec-h-small">This Week&apos;s Issue</div>
++          <div className="sec-rule-line" />
++          <div className="sec-meta">{currentIssue.date}</div>
++        </div>
++
++        <div className="featured-wrapper">
++          {/* Jaguar Eye LEFT */}
++          <div className="jaguar-eye left">
++            <svg viewBox="411 0 632 632" xmlns="http://www.w3.org/2000/svg">
++              <defs>
++                <linearGradient id="jagGold" x1="0%" y1="0%" x2="0%" y2="100%">
++                  <stop offset="0%" stopColor="#d4f5d8" />
++                  <stop offset="18%" stopColor="#9bd97a" />
++                  <stop offset="38%" stopColor="#4faa5a" />
++                  <stop offset="50%" stopColor="#2a7a50" />
++                  <stop offset="60%" stopColor="#c8e090" />
++                  <stop offset="72%" stopColor="#5fbf6b" />
++                  <stop offset="100%" stopColor="#1a4d2e" />
++                </linearGradient>
++              </defs>
++              <rect x="411" y="0" width="632" height="632" fill="url(#jagGold)" opacity="0.7" />
++            </svg>
++          </div>
++
++          {/* Background cursive */}
++          <div className="bg-cursive">
++            <svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
++              <defs>
++                <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
++                  <stop offset="0%" stopColor="#d4f5d8" />
++                  <stop offset="50%" stopColor="#2a7a50" />
++                  <stop offset="100%" stopColor="#1a4d2e" />
++                </linearGradient>
++                <path id="orbit" d="M 400,400 m -340,0 a 340,340 0 1,1 680,0 a 340,340 0 1,1 -680,0" />
++              </defs>
++              <text fill="url(#goldGrad)" opacity="0.6" fontFamily="'Cormorant Garamond', serif" fontSize="32" letterSpacing="0.04em">
++                <textPath href="#orbit" startOffset="0">
++                  Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese · Guyanese ·
++                </textPath>
++              </text>
++            </svg>
++          </div>
++
++          <div />
++
++          {/* Cover */}
++          <div className="featured-issue">
++            <div className="feat-cover">
++              <div className="feat-flag">
++                <div className="feat-flag-label">The Golden Arrowhead</div>
++                <svg viewBox="0 0 500 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
++                  <rect width="500" height="300" fill="#009E49" />
++                  <polygon points="0,0 500,150 0,300" fill="#ffffff" />
++                  <polygon points="0,12 478,150 0,288" fill="#FCD116" />
++                  <polygon points="0,0 290,150 0,300" fill="#000000" />
++                  <polygon points="0,10 268,150 0,290" fill="#CE1126" />
++                </svg>
++              </div>
++              <div className="feat-cover-body">
++                <div className="cover-issue-num">Issue No. {currentIssue.number} — The Republic Edition</div>
++                <div className="cover-title">{currentIssue.headline}</div>
++                <div className="cover-meta">{articles[0].readMin} min read · {currentIssue.date}</div>
++              </div>
++            </div>
++          </div>
++
++          <aside className="featured-side right">
++            <div className="fs-volume">No. <span>{currentIssue.number}</span></div>
++          </aside>
++
++          {/* Jaguar Eye RIGHT */}
++          <div className="jaguar-eye right" style={{ transform: 'translateY(-50%) scaleX(-1)' }}>
++            <svg viewBox="411 0 632 632" xmlns="http://www.w3.org/2000/svg">
++              <rect x="411" y="0" width="632" height="632" fill="url(#jagGold)" opacity="0.7" />
++            </svg>
++          </div>
++        </div>
++      </div>
++
++      <div className="wave-divider" />
++
++      {/* NEWSROOM */}
++      <div id="latest" className="newsroom">
++        <div>
++          <div className="sec-head">
++            <div className="sec-h-large">Latest</div>
++            <a href="#archive" className="btn-collection">Full Collection →</a>
++          </div>
++
++          {articles.map((article) => (
++            <div className="story-row" key={article.id}>
++              <div className="sr-thumb">
++                <Image
++                  src={article.imageUrl}
++                  alt={article.headline}
++                  width={140}
++                  height={105}
++                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
++                  unoptimized
++                />
++              </div>
++              <div className="sr-body">
++                <div className="sr-headline">{article.headline}</div>
++                <div className="sr-dek">{article.dek}</div>
++                <div className="sr-foot">By <strong>{article.author}</strong> · {article.date}</div>
++              </div>
++              <div className="sr-meta">{article.readMin} min</div>
++            </div>
++          ))}
++        </div>
++
++        {/* SIDEBAR */}
++        <aside className="sidebar">
++          <div className="side-card">
++            <div className="side-h">Most Read</div>
++            <div className="most-read">
++              {mostRead.map((item, i) => (
++                <div className="mr-item" key={item.id}>
++                  <div className="mr-num">{String(i + 1).padStart(2, '0')}</div>
++                  <div className="mr-headline">{item.headline}</div>
++                </div>
++              ))}
++            </div>
++          </div>
++
++          <div className="side-card sub-card">
++            <div className="ss-eyebrow">Free · Every Monday</div>
++            <div className="ss-title">Get the Dispatch in your inbox</div>
++            <p className="ss-desc">One email each Monday with the week&apos;s most important signals — before the market opens.</p>
++            <SubscribeForm />
++            <p className="ss-foot">14,000+ readers · Unsubscribe anytime</p>
++          </div>
++
++          <div className="side-card">
++            <div className="side-h">Topics</div>
++            <div className="topics-list">
++              {topics.map((topic) => (
++                <div className="topics-item" key={topic.name}>
++                  <span>{topic.name}</span>
++                  <span className="count">{topic.count}</span>
++                </div>
++              ))}
++            </div>
++          </div>
++        </aside>
++      </div>
++
++      {/* PAST ISSUES */}
++      <section id="archive" className="past-strip">
++        <div className="past-strip-head">
++          <div className="past-strip-h">From the Archive</div>
++          <div className="sec-rule-line" />
++          <a href="#" className="btn-collection">Full Archive →</a>
++        </div>
++        <div className="past-grid">
++          {pastIssues.map((issue) => (
++            <div className="past-item" key={issue.number}>
++              <div className="past-num">
++                <span>Issue {issue.number}</span>
++                <span className="past-date">{issue.date}</span>
++              </div>
++              <div className="past-headline">{issue.headline}</div>
++            </div>
++          ))}
++        </div>
++      </section>
++    </div>
++  )
++}
+diff --git a/lib/data.ts b/lib/data.ts
+new file mode 100644
+index 0000000..50fa4de
+--- /dev/null
++++ b/lib/data.ts
+@@ -0,0 +1,321 @@
++export type Article = {
++  id: string
++  slug: string
++  headline: string
++  dek: string
++  author: string
++  date: string
++  readMin: number
++  imageUrl: string
++  topic: string
++}
++
++export type Issue = {
++  number: number
++  date: string
++  headline: string
++  coverTitle: string
++  coverSubtitle: string
++}
++
++export type Event = {
++  id: string
++  title: string
++  description: string
++  date: string
++  location: string
++  type: 'summit' | 'workshop' | 'networking' | 'pitch' | 'virtual'
++  imageUrl: string
++  spotsLeft?: number
++  featured?: boolean
++}
++
++export type PastEvent = {
++  id: string
++  title: string
++  date: string
++  imageUrl: string
++}
++
++export type TeamMember = {
++  name: string
++  role: string
++  imageUrl: string
++}
++
++export type Topic = {
++  name: string
++  count: number
++}
++
++export const articles: Article[] = [
++  {
++    id: '1',
++    slug: 'quiet-reset-capital-markets',
++    headline: "A quiet reset for Guyana's capital markets",
++    dek: "After a quarter of choppy oil receipts, the Bank of Guyana is reshaping liquidity rules for state-owned enterprises — and private capital is paying close attention.",
++    author: 'Priya Singh',
++    date: 'May 18',
++    readMin: 9,
++    imageUrl: 'https://images.unsplash.com/photo-1605007493699-af65834f8a00?w=400&h=300&fit=crop&auto=format',
++    topic: 'Investment & Finance',
++  },
++  {
++    id: '2',
++    slug: 'offshore-oil-receipts-numbers',
++    headline: "Six months of offshore oil receipts — the numbers that actually matter",
++    dek: "Cutting through the announcement-cycle, here's what the public accounts say about cashflow, royalties, and what's actually been spent.",
++    author: 'Marcus James',
++    date: 'May 17',
++    readMin: 6,
++    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop&auto=format',
++    topic: 'Oil & Energy',
++  },
++  {
++    id: '3',
++    slug: 'diaspora-investment-problem',
++    headline: "The diaspora investment problem — and one Brooklyn fund's plan to solve it",
++    dek: "A new vehicle aims to channel diaspora savings into local SMEs without the usual friction. We sat down with its founders.",
++    author: 'Anika Williams',
++    date: 'May 16',
++    readMin: 7,
++    imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop&auto=format',
++    topic: 'Diaspora Capital',
++  },
++  {
++    id: '4',
++    slug: 'kanuku-capital-labs',
++    headline: "Inside Kanuku Capital Labs — Guyana's first SME-lending fintech",
++    dek: "A 12-person team in Georgetown is building credit infrastructure that big banks won't touch. We spent a week in the office to find out why.",
++    author: 'Devon Roberts',
++    date: 'May 16',
++    readMin: 11,
++    imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=300&fit=crop&auto=format',
++    topic: 'Tech & Innovation',
++  },
++  {
++    id: '5',
++    slug: 'pitch-night-berbice',
++    headline: "Pitch Night Berbice — three highlights from a packed Saturday",
++    dek: "The third Pitch Night drew a hundred and forty operators. Three companies walked out with term sheets in hand.",
++    author: 'Devon Roberts',
++    date: 'May 14',
++    readMin: 4,
++    imageUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&auto=format',
++    topic: 'Tech & Innovation',
++  },
++  {
++    id: '6',
++    slug: 'republic-gbti-sme-lending',
++    headline: "Republic, GBTI, Demerara Bank — who's actually lending to SMEs in Q2?",
++    dek: "An on-the-ground look at where the credit is flowing this quarter — and where it's not.",
++    author: 'Marcus James',
++    date: 'May 17',
++    readMin: 8,
++    imageUrl: 'https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=400&h=300&fit=crop&auto=format',
++    topic: 'Investment & Finance',
++  },
++  {
++    id: '7',
++    slug: 'georgetown-commercial-rents',
++    headline: "Georgetown commercial rents up 22% YoY — has the oil bump priced out local SMEs?",
++    dek: "Three brokers, two developers, and one frustrated tenant on the state of office space in the capital.",
++    author: 'Priya Singh',
++    date: 'May 15',
++    readMin: 5,
++    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop&auto=format',
++    topic: 'Investment & Finance',
++  },
++  {
++    id: '8',
++    slug: 'stabroek-epa-fine',
++    headline: "Stabroek block — what an EPA fine actually changes for operators",
++    dek: "After last month's penalty, we walked through the regulatory reset with two former EPA officials.",
++    author: 'Marcus James',
++    date: 'May 13',
++    readMin: 9,
++    imageUrl: 'https://images.unsplash.com/photo-1604594849809-dfedbc827105?w=400&h=300&fit=crop&auto=format',
++    topic: 'Oil & Energy',
++  },
++  {
++    id: '9',
++    slug: 'rules-of-origin-q3',
++    headline: "New rules of origin — what the Q3 export framework changes for Guyanese producers",
++    dek: "A plain-English explainer of the rule changes, with reaction from three exporters who'll feel them first.",
++    author: 'Anika Williams',
++    date: 'May 15',
++    readMin: 7,
++    imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=300&fit=crop&auto=format',
++    topic: 'Trade & Export',
++  },
++  {
++    id: '10',
++    slug: 'berbice-land-use',
++    headline: "Rice or rooftop solar? Berbice's land-use question keeps getting harder",
++    dek: "A growing solar industry is putting pressure on prime rice land. Who decides the trade-off?",
++    author: 'Priya Singh',
++    date: 'May 14',
++    readMin: 8,
++    imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop&auto=format',
++    topic: 'Agriculture',
++  },
++  {
++    id: '11',
++    slug: 'iwokrama-software-caribbean',
++    headline: "Iwokrama Software's logistics platform crosses 100 Caribbean customers",
++    dek: "Built in Georgetown, sold in Trinidad, Jamaica, and Barbados. A look at the playbook.",
++    author: 'Devon Roberts',
++    date: 'May 11',
++    readMin: 4,
++    imageUrl: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=300&fit=crop&auto=format',
++    topic: 'Tech & Innovation',
++  },
++  {
++    id: '12',
++    slug: 'ug-gti-tech-talent-pipeline',
++    headline: "UG, GTI, and the missing middle — where Guyana's tech talent pipeline breaks",
++    dek: "Engineering graduates are leaving. The reasons are more economic than cultural.",
++    author: 'Devon Roberts',
++    date: 'May 13',
++    readMin: 6,
++    imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=300&fit=crop&auto=format',
++    topic: 'Tech & Innovation',
++  },
++  {
++    id: '13',
++    slug: 'local-content-law-progress',
++    headline: "Local content law — a six-month progress report from inside the Ministry",
++    dek: "What's enforced, what's optional, and what private operators are still confused about.",
++    author: 'Priya Singh',
++    date: 'May 12',
++    readMin: 9,
++    imageUrl: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&h=300&fit=crop&auto=format',
++    topic: 'Policy & Regulation',
++  },
++  {
++    id: '14',
++    slug: 'caricom-development-bank-facility',
++    headline: "CARICOM Development Bank opens a $40M facility for Guyanese MSMEs",
++    dek: "Eligibility criteria, application timeline, and what borrowers are saying about the rates.",
++    author: 'Anika Williams',
++    date: 'May 12',
++    readMin: 3,
++    imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&h=300&fit=crop&auto=format',
++    topic: 'Investment & Finance',
++  },
++]
++
++export const mostRead: Pick<Article, 'id' | 'slug' | 'headline'>[] = [
++  { id: '1', slug: 'quiet-reset-capital-markets', headline: "A quiet reset for Guyana's capital markets" },
++  { id: '4', slug: 'kanuku-capital-labs', headline: "Inside Kanuku Capital Labs — Guyana's first SME-lending fintech" },
++  { id: '3', slug: 'diaspora-investment-problem', headline: "The diaspora investment problem — and one Brooklyn fund's plan to solve it" },
++  { id: '5', slug: 'pitch-night-berbice', headline: "Pitch Night Berbice — three highlights from a packed Saturday" },
++  { id: '10', slug: 'berbice-land-use', headline: "Rice or rooftop solar? Berbice's land-use question" },
++]
++
++export const topics: Topic[] = [
++  { name: 'Investment & Finance', count: 82 },
++  { name: 'Oil & Energy', count: 64 },
++  { name: 'Tech & Innovation', count: 58 },
++  { name: 'Agriculture', count: 47 },
++  { name: 'Trade & Export', count: 39 },
++  { name: 'Policy & Regulation', count: 36 },
++  { name: 'Diaspora Capital', count: 22 },
++]
++
++export const currentIssue: Issue = {
++  number: 47,
++  date: 'May 18, 2026',
++  headline: 'A Quiet Reset for Guyana\'s Capital Markets',
++  coverTitle: 'A Quiet Reset for Guyana\'s Capital Markets',
++  coverSubtitle: '9 min read · May 18, 2026',
++}
++
++export const pastIssues: Issue[] = [
++  { number: 46, date: 'May 11, 2026', headline: "The CARICOM export window is closing — who's ready?", coverTitle: '', coverSubtitle: '' },
++  { number: 45, date: 'May 4, 2026', headline: 'Fintech in Georgetown — a reality check at year one', coverTitle: '', coverSubtitle: '' },
++  { number: 44, date: 'Apr 27, 2026', headline: "Rice, sugar, or something else? Berbice's land question", coverTitle: '', coverSubtitle: '' },
++  { number: 43, date: 'Apr 20, 2026', headline: "Inside the SME loan squeeze — a banker's view", coverTitle: '', coverSubtitle: '' },
++  { number: 42, date: 'Apr 13, 2026', headline: 'Six months of offshore oil — the numbers that matter', coverTitle: '', coverSubtitle: '' },
++  { number: 41, date: 'Apr 6, 2026', headline: 'The diaspora capital problem — and how to solve it', coverTitle: '', coverSubtitle: '' },
++  { number: 40, date: 'Mar 30, 2026', headline: 'Five Guyanese founders to watch in 2026', coverTitle: '', coverSubtitle: '' },
++  { number: 39, date: 'Mar 23, 2026', headline: "The quiet boom in Georgetown's construction sector", coverTitle: '', coverSubtitle: '' },
++]
++
++export const upcomingEvents: Event[] = [
++  {
++    id: 'e1',
++    title: 'Guyana Business Summit 2025',
++    description: 'Annual gathering of entrepreneurs, investors, and policy makers to set the agenda for Guyana\'s economic year. Keynotes, panels, and networking across two days.',
++    date: 'May 14–15, 2025',
++    location: 'Marriott Hotel, Georgetown',
++    type: 'summit',
++    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop&auto=format',
++    spotsLeft: 48,
++    featured: true,
++  },
++  {
++    id: 'e2',
++    title: 'SME Finance Workshop',
++    description: 'Practical workshop on accessing capital, structuring your business for lending, and navigating the local banking landscape.',
++    date: 'May 28, 2025',
++    location: 'Pegasus Hotel, Georgetown',
++    type: 'workshop',
++    imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop&auto=format',
++    spotsLeft: 24,
++  },
++  {
++    id: 'e3',
++    title: 'Next Gen Pitch Night Vol. 4',
++    description: 'Founders pitch their companies to a panel of investors and mentors. Open to all Guyanese-founded startups at any stage.',
++    date: 'Jun 7, 2025',
++    location: 'Cara Lodge, Georgetown',
++    type: 'pitch',
++    imageUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&auto=format',
++    spotsLeft: 60,
++  },
++  {
++    id: 'e4',
++    title: 'Diaspora Investor Networking Mixer',
++    description: 'Connecting Guyanese diaspora investors with founders and operators building on the ground. Drinks and introductions.',
++    date: 'Jun 14, 2025',
++    location: 'Duke Lodge, Georgetown',
++    type: 'networking',
++    imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=300&fit=crop&auto=format',
++    spotsLeft: 80,
++  },
++  {
++    id: 'e5',
++    title: 'Oil Sector Outlook Webinar',
++    description: 'Analysts and operators discuss the second-half outlook for Guyana\'s offshore production, local content, and downstream opportunities.',
++    date: 'Jun 20, 2025',
++    location: 'Online',
++    type: 'virtual',
++    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop&auto=format',
++    spotsLeft: 500,
++  },
++  {
++    id: 'e6',
++    title: 'Agri-Business Roundtable',
++    description: 'Bringing together rice and sugar producers, fintech lenders, and government officials to discuss the future of Berbice agriculture.',
++    date: 'Jul 3, 2025',
++    location: 'New Amsterdam, Berbice',
++    type: 'networking',
++    imageUrl: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&h=300&fit=crop&auto=format',
++    spotsLeft: 40,
++  },
++]
++
++export const pastEvents: PastEvent[] = [
++  { id: 'pe1', title: 'Business Summit 2024', date: 'November 2024', imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop&auto=format' },
++  { id: 'pe2', title: 'Year-End Business Mixer', date: 'December 2024', imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=300&fit=crop&auto=format' },
++  { id: 'pe3', title: 'Next Gen Pitch Night Vol. 3', date: 'October 2024', imageUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&auto=format' },
++  { id: 'pe4', title: 'Agri-Business Forum 2024', date: 'September 2024', imageUrl: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&h=300&fit=crop&auto=format' },
++]
++
++export const teamMembers: TeamMember[] = [
++  { name: 'Marcus James', role: 'Co-Founder & CEO', imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&auto=format' },
++  { name: 'Priya Singh', role: 'Co-Founder & Editorial', imageUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&auto=format' },
++  { name: 'Devon Roberts', role: 'Co-Founder & Engineering', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&auto=format' },
++  { name: 'Anika Williams', role: 'Co-Founder & Community', imageUrl: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=200&h=200&fit=crop&auto=format' },
++]
+diff --git a/package-lock.json b/package-lock.json
+index ff52861..1090dbf 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -598,9 +598,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -617,9 +614,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -636,9 +630,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -655,9 +646,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -674,9 +662,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -693,9 +678,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -712,9 +694,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -731,9 +710,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -750,9 +726,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -775,9 +748,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -800,9 +770,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -825,9 +792,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -850,9 +814,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -875,9 +836,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -900,9 +858,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -925,9 +880,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1137,9 +1089,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1156,9 +1105,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1175,9 +1121,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1194,9 +1137,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1435,9 +1375,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1455,9 +1392,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1475,9 +1409,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1495,9 +1426,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2048,9 +1976,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2065,9 +1990,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2082,9 +2004,6 @@
+         "ppc64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2099,9 +2018,6 @@
+         "riscv64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2116,9 +2032,6 @@
+         "riscv64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2133,9 +2046,6 @@
+         "s390x"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2150,9 +2060,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2167,9 +2074,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -4801,9 +4705,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -4825,9 +4726,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -4849,9 +4747,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -4873,9 +4768,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+-- 
+2.43.0
+
