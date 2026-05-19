@@ -684,8 +684,8 @@
 
       <div></div>
 
-      <div class="featured-issue">
-        <div class="feat-cover">
+      <div class="featured-issue" id="featured-issue">
+        <a class="feat-cover" href="#" id="featured-link" style="text-decoration:none;color:inherit;cursor:pointer;">
           <div class="feat-flag">
             <div class="feat-flag-label">The Golden Arrowhead</div>
             <svg viewBox="0 0 500 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -697,11 +697,11 @@
             </svg>
           </div>
           <div class="feat-cover-body">
-            <div class="cover-issue-num">Issue No. 47 — The Republic Edition</div>
-            <div class="cover-title">A Quiet Reset for Guyana's Capital Markets</div>
-            <div class="cover-meta">9 min read · May 18, 2026</div>
+            <div class="cover-issue-num" id="featured-issue-num">Loading...</div>
+            <div class="cover-title" id="featured-title">This Week's Issue</div>
+            <div class="cover-meta" id="featured-meta"></div>
           </div>
-        </div>
+        </a>
       </div>
 
       <aside class="featured-side right"></aside>
@@ -882,6 +882,21 @@
               <div class="mr-headline">${a.title}</div>
             </a>
           `).join('');
+        }
+
+        // Populate This Week's Issue with latest "Weekly Issue" or first article
+        const formatDateLong = (d) => {
+          if (!d) return '';
+          const date = new Date(d + 'T00:00:00');
+          return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        };
+
+        const weeklyIssue = data.articles.find(a => a.category === 'Weekly Issue') || data.articles[0];
+        if (weeklyIssue) {
+          document.getElementById('featured-link').href = 'article.html?id=' + weeklyIssue.id;
+          document.getElementById('featured-title').textContent = weeklyIssue.title;
+          document.getElementById('featured-issue-num').textContent = (weeklyIssue.category === 'Weekly Issue' ? 'Weekly Issue' : weeklyIssue.category) + ' — The Jaguar';
+          document.getElementById('featured-meta').textContent = (weeklyIssue.readTime ? weeklyIssue.readTime + ' read · ' : '') + formatDateLong(weeklyIssue.date);
         }
       } catch (err) {
         container.innerHTML = '<div style="padding:40px 0;text-align:center;font-size:14px;color:rgba(20,32,26,0.45);">Failed to load articles.</div>';
