@@ -800,39 +800,8 @@
       <div class="sec-rule-line"></div>
       <a href="#" class="btn-collection">Full Archive →</a>
     </div>
-    <div class="past-grid">
-      <div class="past-item">
-        <div class="past-num"><span>Issue 46</span><span class="past-date">May 11, 2026</span></div>
-        <div class="past-headline">The CARICOM export window is closing — who's ready?</div>
-      </div>
-      <div class="past-item">
-        <div class="past-num"><span>Issue 45</span><span class="past-date">May 4, 2026</span></div>
-        <div class="past-headline">Fintech in Georgetown — a reality check at year one</div>
-      </div>
-      <div class="past-item">
-        <div class="past-num"><span>Issue 44</span><span class="past-date">Apr 27, 2026</span></div>
-        <div class="past-headline">Rice, sugar, or something else? Berbice's land question</div>
-      </div>
-      <div class="past-item">
-        <div class="past-num"><span>Issue 43</span><span class="past-date">Apr 20, 2026</span></div>
-        <div class="past-headline">Inside the SME loan squeeze — a banker's view</div>
-      </div>
-      <div class="past-item">
-        <div class="past-num"><span>Issue 42</span><span class="past-date">Apr 13, 2026</span></div>
-        <div class="past-headline">Six months of offshore oil — the numbers that matter</div>
-      </div>
-      <div class="past-item">
-        <div class="past-num"><span>Issue 41</span><span class="past-date">Apr 6, 2026</span></div>
-        <div class="past-headline">The diaspora capital problem — and how to solve it</div>
-      </div>
-      <div class="past-item">
-        <div class="past-num"><span>Issue 40</span><span class="past-date">Mar 30, 2026</span></div>
-        <div class="past-headline">Five Guyanese founders to watch in 2026</div>
-      </div>
-      <div class="past-item">
-        <div class="past-num"><span>Issue 39</span><span class="past-date">Mar 23, 2026</span></div>
-        <div class="past-headline">The quiet boom in Georgetown's construction sector</div>
-      </div>
+    <div class="past-grid" id="archive-grid">
+      <div style="grid-column:1/-1;text-align:center;font-size:14px;color:rgba(20,32,26,0.45);padding:20px 0;">Loading archive...</div>
     </div>
   </section>
   <script src="js/app.js"></script>
@@ -882,6 +851,22 @@
               <div class="mr-headline">${a.title}</div>
             </a>
           `).join('');
+        }
+
+        // Populate From the Archive with articles tagged "Archive"
+        const archiveGrid = document.getElementById('archive-grid');
+        const archiveArticles = data.articles.filter(a => a.category === 'Archive');
+        if (archiveGrid) {
+          if (archiveArticles.length === 0) {
+            archiveGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;font-size:14px;color:rgba(20,32,26,0.45);padding:20px 0;">No archive articles yet.</div>';
+          } else {
+            archiveGrid.innerHTML = archiveArticles.slice(0, 8).map(a => `
+              <a class="past-item" href="article.html?id=${a.id}" style="text-decoration:none;color:inherit;">
+                <div class="past-num"><span>${a.category}</span><span class="past-date">${formatDate(a.date)}</span></div>
+                <div class="past-headline">${a.title}</div>
+              </a>
+            `).join('');
+          }
         }
 
         // Populate This Week's Issue with latest "Weekly Issue" or first article
